@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import {
+  BadgeCheck,
   Download,
   Eye,
   LayoutDashboard,
@@ -12,6 +13,7 @@ import {
   DEVELOPER,
   RELEASES_URL,
   REPO_URL,
+  isNativeApp,
 } from '../lib/site'
 
 /** Public download landing page: /download */
@@ -27,12 +29,25 @@ export function DownloadPage() {
           <span className="chip chip-code">{APP_VERSION}</span>
         </p>
         <div className="dl-cta">
-          <a className="btn btn-primary btn-big" href={APK_URL}>
-            <Download size={20} aria-hidden="true" /> Download SyncTimer APK
-          </a>
-          <p className="muted small">
-            Free · ~15 MB · Android 8.0+ · direct from GitHub Releases
-          </p>
+          {isNativeApp() ? (
+            <p className="notice" role="note">
+              <BadgeCheck
+                size={18}
+                aria-hidden="true"
+                style={{ verticalAlign: '-3px' }}
+              />{' '}
+              You’re already using the SyncTimer app — no download needed.
+            </p>
+          ) : (
+            <>
+              <a className="btn btn-primary btn-big" href={APK_URL}>
+                <Download size={20} aria-hidden="true" /> Download SyncTimer APK
+              </a>
+              <p className="muted small">
+                Free · ~15 MB · Android 8.0+ · direct from GitHub Releases
+              </p>
+            </>
+          )}
         </div>
       </header>
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Camera, Smartphone } from 'lucide-react'
 import { QrScanner, extractCodeFromScan } from '../components/QrScanner'
 import { isFirebaseConfigured } from '../lib/firebase'
+import { isNativeApp } from '../lib/site'
 import { createRoom } from '../hooks/useRoom'
 import { clampDurationMs, normalizeCode } from '../lib/time'
 
@@ -99,9 +100,11 @@ export function HomePage({ uid, authReady, authError }) {
           with a code or link and stay in sync in real time.
         </p>
         <div className="home-cta-row">
-          <Link className="btn btn-secondary" to="/download">
-            <Smartphone size={18} aria-hidden="true" /> Get the Android app
-          </Link>
+          {!isNativeApp() && (
+            <Link className="btn btn-secondary" to="/download">
+              <Smartphone size={18} aria-hidden="true" /> Get the Android app
+            </Link>
+          )}
         </div>
         {!isFirebaseConfigured && (
           <p className="notice" role="note">
