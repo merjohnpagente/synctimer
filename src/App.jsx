@@ -4,7 +4,7 @@ import { HomePage } from './pages/HomePage'
 import { AdminPage } from './pages/AdminPage'
 import { WatchPage } from './pages/WatchPage'
 import { DownloadPage } from './pages/DownloadPage'
-import { DEVELOPER } from './lib/site'
+import { APP_VERSION, DEVELOPER } from './lib/site'
 
 // HashRouter: works on Firebase Hosting AND inside the Capacitor
 // Android WebView (file://), where BrowserRouter history breaks.
@@ -41,7 +41,9 @@ export default function App() {
           />
         </Routes>
         <footer className="app-footer">
-          <span>SyncTimer · Developed by {DEVELOPER}</span>
+          <span>
+            SyncTimer v{APP_VERSION} · Developed by {DEVELOPER}
+          </span>
         </footer>
       </div>
     </HashRouter>

@@ -835,3 +835,48 @@ body {
   border-radius: 12px;
   display: block;
 }
+
+/* ---------- version + update banner ---------- */
+.ver-chip {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.3);
+  color: #c7d2fe;
+  letter-spacing: 0.06em;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.update-banner {
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  background: rgba(6, 78, 59, 0.35);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.update-main {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.update-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.update-progress {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+  overflow: hidden;
+}
+.update-progress > div {
+  height: 100%;
+  background: linear-gradient(90deg, #34d399, #6366f1);
+  transition: width 0.2s linear;
+}

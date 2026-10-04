@@ -23,6 +23,11 @@
         "endsAt": { ".validate": "newData.val() === null || newData.isNumber()" },
         "ownerId": { ".validate": "newData.isString()" },
         "updatedBy": { ".validate": "newData.isString()" },
+        "mode": {
+          ".validate": "newData.isString() && (newData.val() === 'countdown' || newData.val() === 'stopwatch')"
+        },
+        "startedAt": { ".validate": "newData.val() === null || newData.isNumber()" },
+        "elapsedBaseMs": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 86400000" },
 
         // TIMER FIELDS: only the owner can ever change them.
         // Viewers' writes are rejected here even if they bypass the UI.

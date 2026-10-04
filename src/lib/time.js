@@ -21,6 +21,16 @@ export const STATUS_LABEL = {
   ended: 'Ended',
 }
 
+export const MODES = {
+  COUNTDOWN: 'countdown',
+  STOPWATCH: 'stopwatch',
+}
+
+export const MODE_LABEL = {
+  countdown: 'Countdown',
+  stopwatch: 'Stopwatch',
+}
+
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 
 export function generateRoomCode(length = 6) {
@@ -61,8 +71,29 @@ export function computeRemainingMs(room, now = Date.now()) {
   return Math.max(0, room.durationMs || 0)
 }
 
+/** Elapsed ms for a stopwatch room (count-up from 0). */
+export function computeElapsedMs(room, now = Date.now()) {
+  if (!room) return 0
+  const base = typeof room.elapsedBaseMs === 'number' ? room.elapsedBaseMs : 0
+  if (room.status === STATUS.RUNNING && typeof room.startedAt === 'number') {
+    return Math.max(0, base + (now - room.startedAt))
+  }
+  return Math.max(0, base)
+}
+
 export function formatClock(ms) {
   const totalSec = Math.max(0, Math.ceil(ms / 1000))
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  const pad = (n) => String(n).padStart(2, '0')
+  if (h > 0) return `${pad(h)}:${pad(m)}:${pad(s)}`
+  return `${pad(m)}:${pad(s)}`
+}
+
+/** Count-up clock (floor-based so 00:00 shows at the start). */
+export function formatUp(ms) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000))
   const h = Math.floor(totalSec / 3600)
   const m = Math.floor((totalSec % 3600) / 60)
   const s = totalSec % 60
@@ -137,9 +168,10 @@ export function installAudioUnlock() {
 /**
  * Classic timer alarm (WebAudio, no asset files needed): rapid,
  * high-pitched square-wave beeps like a kitchen/digital timer.
- * Respects the sound toggle. Returns true if sound was played.
+ * Long (~10 seconds) and loud. Respects the sound toggle.
+ * Returns true if sound was played.
  */
-export function playFinishChime(times = 12) {
+export function playFinishChime(times = 32) {
   if (!isSoundEnabled()) return false
   try {
     const ctx = getCtx()
@@ -152,7 +184,7 @@ export function playFinishChime(times = 12) {
       osc.frequency.value = 1046.5 // C6 — classic timer beep pitch
       const t = now + i * 0.3
       gain.gain.setValueAtTime(0.0001, t)
-      gain.gain.exponentialRampToValueAtTime(0.22, t + 0.015)
+      gain.gain.exponentialRampToValueAtTime(0.32, t + 0.015)
       gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.17)
       osc.connect(gain).connect(ctx.destination)
       osc.start(t)
@@ -167,7 +199,13 @@ export function playFinishChime(times = 12) {
 
 export function vibrateOnFinish() {
   try {
-    if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 500])
+    // ~10s buzz pattern matching the alarm length (ignored on desktop).
+    if (navigator.vibrate) {
+      navigator.vibrate([
+        400, 200, 400, 200, 400, 200, 400, 200, 400, 200, 400, 200, 400, 200,
+        400, 200, 800,
+      ])
+    }
   } catch {
     // ignore
   }

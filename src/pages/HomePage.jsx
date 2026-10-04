@@ -2,8 +2,9 @@ import { useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Camera, Smartphone } from 'lucide-react'
 import { QrScanner, extractCodeFromScan } from '../components/QrScanner'
+import { UpdateBanner } from '../components/UpdateBanner'
 import { isFirebaseConfigured } from '../lib/firebase'
-import { isNativeApp } from '../lib/site'
+import { APP_VERSION, isNativeApp } from '../lib/site'
 import { createRoom } from '../hooks/useRoom'
 import { clampDurationMs, normalizeCode } from '../lib/time'
 
@@ -92,8 +93,11 @@ export function HomePage({ uid, authReady, authError }) {
 
   return (
     <div className="theme-host home">
+      <UpdateBanner />
       <header className="home-hero">
-        <div className="eyebrow">SyncTimer</div>
+        <div className="eyebrow">
+          SyncTimer <span className="ver-chip">v{APP_VERSION}</span>
+        </div>
         <h1>One timer, every screen.</h1>
         <p className="muted">
           The host controls a countdown from the admin dashboard. Viewers join
