@@ -135,10 +135,11 @@ export function installAudioUnlock() {
 }
 
 /**
- * Insistent finish alarm (WebAudio, no asset files needed).
+ * Classic timer alarm (WebAudio, no asset files needed): rapid,
+ * high-pitched square-wave beeps like a kitchen/digital timer.
  * Respects the sound toggle. Returns true if sound was played.
  */
-export function playFinishChime(times = 5) {
+export function playFinishChime(times = 12) {
   if (!isSoundEnabled()) return false
   try {
     const ctx = getCtx()
@@ -147,15 +148,15 @@ export function playFinishChime(times = 5) {
     for (let i = 0; i < times; i++) {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.value = i % 2 === 0 ? 880 : 659.25
-      const t = now + i * 0.32
+      osc.type = 'square'
+      osc.frequency.value = 1046.5 // C6 — classic timer beep pitch
+      const t = now + i * 0.3
       gain.gain.setValueAtTime(0.0001, t)
-      gain.gain.exponentialRampToValueAtTime(0.5, t + 0.02)
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.29)
+      gain.gain.exponentialRampToValueAtTime(0.22, t + 0.015)
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.17)
       osc.connect(gain).connect(ctx.destination)
       osc.start(t)
-      osc.stop(t + 0.32)
+      osc.stop(t + 0.2)
     }
     return true
   } catch {
