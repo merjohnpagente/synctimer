@@ -23,8 +23,9 @@ Deploy `dist/` anywhere static: Firebase Hosting, Netlify, Vercel, GitHub Pages.
 ## B. Android APK via Capacitor
 
 The app already uses `HashRouter`, so routing works inside the native WebView
-(`file://`, no server needed). Capacitor config: `capacitor.config.ts`
-(`appId: com.synctimer.app`, `webDir: dist`).
+(`file://`, no server needed). Capacitor config: `capacitor.config.json`
+(`appId: com.synctimer.app`, `webDir: dist`). The `android/` platform folder
+is already in this repo (`npx cap add android` was run).
 
 > Honest note: Acode alone cannot compile an APK — that needs the Android SDK
 > (Android Studio) or a cloud builder. Acode is for editing; build on a PC,

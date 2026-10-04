@@ -44,7 +44,8 @@ src/
   components/ HostDashboard.jsx · ViewerDashboard.jsx · common.jsx (TimerFace…)
   pages/      HomePage.jsx · AdminPage.jsx (host-only) · WatchPage.jsx (view-only)
   App.jsx     HashRouter: / · /admin/:code · /watch/:code
-capacitor.config.ts   Android wrapper (appId com.synctimer.app, webDir dist)
+capacitor.config.json   Android wrapper (appId com.synctimer.app, webDir dist)
+android/                native Android project (open in Android Studio to build APK)
 database.rules.json   Realtime Database Security Rules
 ```
 

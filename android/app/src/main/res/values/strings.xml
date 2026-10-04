@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SyncTimer</string>
+    <string name="title_activity_main">SyncTimer</string>
+    <string name="package_name">com.synctimer.app</string>
+    <string name="custom_url_scheme">com.synctimer.app</string>
+</resources>

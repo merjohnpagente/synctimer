@@ -6,9 +6,13 @@
         // The room code in the link is the access secret.
         ".read": "auth != null",
 
-        // CREATE: the creator must stamp themselves as owner, with a sane shape.
-        // $code is new here (!data.exists()).
-        ".write": "auth != null && (!data.exists() && newData.child('ownerId').val() === auth.uid && newData.child('durationMs').isNumber() && newData.child('durationMs').val() >= 5000 && newData.child('durationMs').val() <= 86400000)",
+        // HOST-ONLY WRITES: the room owner can create, update, and delete
+        // their own room. Anyone else may only CREATE a brand-new room while
+        // stamping themselves as its owner (with a sane duration).
+        // Viewers can therefore never change timer fields — the server
+        // rejects them even if they bypass the UI. Presence entries are
+        // handled by the participants/$uid rule below.
+        ".write": "auth != null && (data.child('ownerId').val() === auth.uid || (!data.exists() && newData.child('ownerId').val() === auth.uid && newData.child('durationMs').isNumber() && newData.child('durationMs').val() >= 5000 && newData.child('durationMs').val() <= 86400000))",
 
         "name": { ".validate": "newData.isString() && newData.val().length <= 80" },
         "durationMs": { ".validate": "newData.isNumber() && newData.val() >= 5000 && newData.val() <= 86400000" },

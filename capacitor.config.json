@@ -1,0 +1,8 @@
+{
+  "appId": "com.synctimer.app",
+  "appName": "SyncTimer",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
