@@ -119,6 +119,8 @@ export function vibrateOnFinish() {
 }
 
 export function inviteLinkFor(code) {
+  // HashRouter is used (APK file:// compatible), so the route must sit
+  // after /#/ — a plain /watch/CODE path would 404 on static hosts.
   const clean = normalizeCode(code)
-  return `${window.location.origin}/watch/${clean}`
+  return `${window.location.origin}/#/watch/${clean}`
 }
