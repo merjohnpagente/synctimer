@@ -208,6 +208,11 @@ body {
   flex-wrap: wrap;
   gap: 8px;
 }
+.chip-btn.is-active {
+  background: rgba(99, 102, 241, 0.35);
+  border-color: #818cf8;
+  font-weight: 700;
+}
 .room-code {
   font-family: var(--mono);
   font-size: 34px;

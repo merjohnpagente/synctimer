@@ -98,6 +98,7 @@ export function SharePanel({ code }) {
 export function HostDashboard({
   code,
   room,
+  mode = 'countdown',
   remainingMs,
   effectiveStatus,
   participants,
@@ -166,6 +167,7 @@ export function HostDashboard({
             status={effectiveStatus}
             durationMs={room.durationMs}
             tone="dark"
+            mode={mode}
           />
           {actionError && (
             <p className="error" role="alert">
@@ -216,7 +218,8 @@ export function HostDashboard({
             )}
             {(effectiveStatus === STATUS.READY ||
               effectiveStatus === STATUS.PAUSED ||
-              effectiveStatus === STATUS.FINISHED) && (
+              effectiveStatus === STATUS.FINISHED) &&
+              mode !== 'stopwatch' && (
               <>
                 <button
                   type="button"

@@ -13,7 +13,7 @@ function loadName() {
 /** Admin route: only the room owner gets controls. */
 export function AdminPage({ uid, authReady }) {
   const { code } = useParams()
-  const { room, loading, roomError, participants, connected, remainingMs, effectiveStatus, isOwner, actions } =
+  const { room, loading, roomError, participants, connected, mode, displayMs, effectiveStatus, isOwner, actions } =
     useRoom(code, uid, loadName())
 
   if (!authReady) {
@@ -63,7 +63,8 @@ export function AdminPage({ uid, authReady }) {
     <HostDashboard
       code={code}
       room={room}
-      remainingMs={remainingMs}
+      mode={mode}
+      remainingMs={displayMs}
       effectiveStatus={effectiveStatus}
       participants={participants}
       connected={connected}

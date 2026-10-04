@@ -31,8 +31,20 @@ export function StatusPill({ status }) {
 }
 
 /** Big synchronized digits + progress ring. Read-only visual. */
-export function TimerFace({ remainingMs, status, durationMs, tone = 'dark' }) {
-  const totalSec = Math.max(0, Math.ceil(remainingMs / 1000))
+export function TimerFace({
+  remainingMs,
+  status,
+  durationMs,
+  tone = 'dark',
+  mode = 'countdown',
+}) {
+  const isSW = mode === 'stopwatch'
+  // Stopwatch counts UP from zero (floor so 00:00 shows at the start);
+  // countdown rounds UP so 0:01 shows until the very last moment.
+  const totalSec = Math.max(
+    0,
+    isSW ? Math.floor(remainingMs / 1000) : Math.ceil(remainingMs / 1000),
+  )
   const h = Math.floor(totalSec / 3600)
   const m = Math.floor((totalSec % 3600) / 60)
   const s = totalSec % 60
@@ -40,17 +52,20 @@ export function TimerFace({ remainingMs, status, durationMs, tone = 'dark' }) {
   const main = h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`
   const tenths = Math.max(0, Math.floor((remainingMs % 1000) / 100))
 
-  const frac =
-    durationMs > 0
+  const frac = isSW
+    ? 1
+    : durationMs > 0
       ? Math.min(1, Math.max(0, 1 - remainingMs / durationMs))
       : 0
   const R = 120
   const C = 2 * Math.PI * R
 
-  const urgent = status === 'running' && remainingMs <= 10_000
+  const urgent = !isSW && status === 'running' && remainingMs <= 10_000
   const done = status === 'finished' || status === 'ended'
   const elapsed = durationMs > 0 ? Math.max(0, durationMs - remainingMs) : 0
+  // The big digits already ARE the elapsed time in stopwatch mode.
   const showElapsed =
+    !isSW &&
     durationMs > 0 &&
     (status === 'running' || status === 'paused' || status === 'finished')
 
@@ -74,7 +89,7 @@ export function TimerFace({ remainingMs, status, durationMs, tone = 'dark' }) {
         <div className="timer-digits">
           <div
             className="timer-main"
-            aria-label={`${main} remaining, timer ${status}`}
+            aria-label={`${main} ${isSW ? 'elapsed' : 'remaining'}, timer ${status}`}
           >
             {main}
             <span className="timer-tenths">.{tenths}</span>

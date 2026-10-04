@@ -29,6 +29,7 @@ export function HomePage({ uid, authReady, authError }) {
   const navigate = useNavigate()
   const [roomName, setRoomName] = useState('')
   const [minutes, setMinutes] = useState(10)
+  const [timerMode, setTimerMode] = useState('countdown')
   const [joinCode, setJoinCode] = useState('')
   const [displayName, setDisplayName] = useState(loadName)
   const [creating, setCreating] = useState(false)
@@ -59,6 +60,7 @@ export function HomePage({ uid, authReady, authError }) {
         name: roomName.trim() || 'Untitled timer',
         durationMs,
         ownerId: uid,
+        mode: timerMode,
       })
       navigate(`/admin/${code}`)
     } catch (err) {
@@ -159,6 +161,22 @@ export function HomePage({ uid, authReady, authError }) {
                   onClick={() => setMinutes(p.ms / 60_000)}
                 >
                   {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="preset-row" role="group" aria-label="Timer mode">
+              {[
+                { value: 'countdown', label: 'Countdown' },
+                { value: 'stopwatch', label: 'Stopwatch' },
+              ].map((m) => (
+                <button
+                  key={m.value}
+                  type="button"
+                  className={`chip-btn${timerMode === m.value ? ' is-active' : ''}`}
+                  aria-pressed={timerMode === m.value}
+                  onClick={() => setTimerMode(m.value)}
+                >
+                  {m.label}
                 </button>
               ))}
             </div>

@@ -15,7 +15,7 @@ import {
  * deliberately renders ZERO control buttons. Enforcement happens
  * in Security Rules; this UI simply offers nothing to abuse.
  */
-export function ViewerDashboard({ code, room, remainingMs, effectiveStatus, connected }) {
+export function ViewerDashboard({ code, room, mode = 'countdown', remainingMs, effectiveStatus, connected }) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const prevStatus = useRef(null)
 
@@ -109,6 +109,7 @@ export function ViewerDashboard({ code, room, remainingMs, effectiveStatus, conn
           status={effectiveStatus}
           durationMs={room.durationMs}
           tone="light"
+          mode={mode}
         />
         <div
           className="viewer-progress"
@@ -125,8 +126,13 @@ export function ViewerDashboard({ code, room, remainingMs, effectiveStatus, conn
         </div>
         <p className="muted viewer-hint">
           {effectiveStatus === STATUS.READY &&
-            'Waiting for the host to start the timer.'}
-          {effectiveStatus === STATUS.RUNNING && 'Synced live with the host.'}
+            (mode === 'stopwatch'
+              ? 'Waiting for the host to start the stopwatch.'
+              : 'Waiting for the host to start the timer.')}
+          {effectiveStatus === STATUS.RUNNING &&
+            (mode === 'stopwatch'
+              ? 'Stopwatch running — synced live.'
+              : 'Synced live with the host.')}
           {effectiveStatus === STATUS.PAUSED && 'Paused by the host.'}
           {effectiveStatus === STATUS.FINISHED && "Time's up!"}
           {effectiveStatus === STATUS.ENDED && 'This session has ended.'}

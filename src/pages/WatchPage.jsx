@@ -13,7 +13,7 @@ function loadName() {
 /** Viewer route: read-only by design — no control actions are exposed. */
 export function WatchPage({ uid, authReady }) {
   const { code } = useParams()
-  const { room, loading, roomError, connected, remainingMs, effectiveStatus } =
+  const { room, loading, roomError, connected, mode, displayMs, effectiveStatus } =
     useRoom(code, uid, loadName())
 
   if (!authReady) {
@@ -50,7 +50,8 @@ export function WatchPage({ uid, authReady }) {
     <ViewerDashboard
       code={code}
       room={room}
-      remainingMs={remainingMs}
+      mode={mode}
+      remainingMs={displayMs}
       effectiveStatus={effectiveStatus}
       connected={connected}
     />
