@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Volume2, VolumeX } from 'lucide-react'
+import { Timer, Volume2, VolumeX } from 'lucide-react'
 import {
   STATUS_LABEL,
   ensureAudioUnlocked,
+  formatClock,
   isSoundEnabled,
   playFinishChime,
   setSoundEnabled,
@@ -48,6 +49,10 @@ export function TimerFace({ remainingMs, status, durationMs, tone = 'dark' }) {
 
   const urgent = status === 'running' && remainingMs <= 10_000
   const done = status === 'finished' || status === 'ended'
+  const elapsed = durationMs > 0 ? Math.max(0, durationMs - remainingMs) : 0
+  const showElapsed =
+    durationMs > 0 &&
+    (status === 'running' || status === 'paused' || status === 'finished')
 
   return (
     <div className={`timer-face tone-${tone}`}>
@@ -75,6 +80,15 @@ export function TimerFace({ remainingMs, status, durationMs, tone = 'dark' }) {
             <span className="timer-tenths">.{tenths}</span>
           </div>
           <StatusPill status={status} />
+          {showElapsed && (
+            <div
+              className="timer-elapsed"
+              aria-label={`Elapsed ${formatClock(elapsed)}`}
+            >
+              <Timer size={14} aria-hidden="true" /> Elapsed{' '}
+              {formatClock(elapsed)}
+            </div>
+          )}
         </div>
       </div>
     </div>
