@@ -1,0 +1,188 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { isFirebaseConfigured } from '../lib/firebase'
+import { createRoom } from '../hooks/useRoom'
+import { clampDurationMs, normalizeCode } from '../lib/time'
+
+const PRESETS = [
+  { label: '1 min', ms: 60_000 },
+  { label: '5 min', ms: 5 * 60_000 },
+  { label: '10 min', ms: 10 * 60_000 },
+  { label: '15 min', ms: 15 * 60_000 },
+  { label: '25 min', ms: 25 * 60_000 },
+  { label: '60 min', ms: 60 * 60_000 },
+]
+
+function loadName() {
+  try {
+    return localStorage.getItem('synctimer-name') || ''
+  } catch {
+    return ''
+  }
+}
+
+export function HomePage({ uid, authReady, authError }) {
+  const navigate = useNavigate()
+  const [roomName, setRoomName] = useState('')
+  const [minutes, setMinutes] = useState(10)
+  const [joinCode, setJoinCode] = useState('')
+  const [displayName, setDisplayName] = useState(loadName)
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState(null)
+
+  const persistName = (v) => {
+    setDisplayName(v)
+    try {
+      localStorage.setItem('synctimer-name', v)
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleCreate = async (e) => {
+    e.preventDefault()
+    setError(null)
+    if (!uid) {
+      setError('Signing you in… please try again in a second.')
+      return
+    }
+    setCreating(true)
+    try {
+      const durationMs = clampDurationMs(Number(minutes) * 60_000)
+      const code = await createRoom({
+        name: roomName.trim() || 'Untitled timer',
+        durationMs,
+        ownerId: uid,
+      })
+      navigate(`/admin/${code}`)
+    } catch (err) {
+      setError(err?.message || 'Could not create room.')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleJoin = (e) => {
+    e.preventDefault()
+    const clean = normalizeCode(joinCode)
+    if (!clean) {
+      setError('Enter a room code to join.')
+      return
+    }
+    navigate(`/watch/${clean}`)
+  }
+
+  return (
+    <div className="theme-host home">
+      <header className="home-hero">
+        <div className="eyebrow">SyncTimer</div>
+        <h1>One timer, every screen.</h1>
+        <p className="muted">
+          The host controls a countdown from the admin dashboard. Viewers join
+          with a code or link and stay in sync in real time.
+        </p>
+        {!isFirebaseConfigured && (
+          <p className="notice" role="note">
+            Demo mode: Firebase env vars are missing, so rooms only work on this
+            device. See <code>.env.example</code> + <code>FIREBASE_SETUP.md</code>{' '}
+            to enable real multi-device sync.
+          </p>
+        )}
+        {authError && (
+          <p className="error" role="alert">
+            {authError}
+          </p>
+        )}
+      </header>
+
+      <main className="home-grid">
+        <section className="card" aria-label="Admin: create a room">
+          <h2 className="card-title">Admin — create a room</h2>
+          <form onSubmit={handleCreate} className="form">
+            <label className="field">
+              <span className="field-label">Timer name</span>
+              <input
+                className="input"
+                value={roomName}
+                onChange={(e) => setRoomName(e.target.value)}
+                placeholder="e.g. Morning workout"
+                maxLength={80}
+              />
+            </label>
+            <label className="field">
+              <span className="field-label">Duration (minutes)</span>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                max={1440}
+                value={minutes}
+                onChange={(e) => setMinutes(e.target.value)}
+                inputMode="numeric"
+              />
+            </label>
+            <div className="preset-row" role="group" aria-label="Presets">
+              {PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  className="chip-btn"
+                  onClick={() => setMinutes(p.ms / 60_000)}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="submit"
+              className="btn btn-primary btn-big"
+              disabled={creating || !authReady}
+            >
+              {creating ? 'Creating…' : 'Create room & open dashboard'}
+            </button>
+          </form>
+        </section>
+
+        <section className="card" aria-label="Viewer: join a room">
+          <h2 className="card-title">Viewer — join a room</h2>
+          <form onSubmit={handleJoin} className="form">
+            <label className="field">
+              <span className="field-label">Your name (shown to host)</span>
+              <input
+                className="input"
+                value={displayName}
+                onChange={(e) => persistName(e.target.value)}
+                placeholder="e.g. Alex"
+                maxLength={40}
+              />
+            </label>
+            <label className="field">
+              <span className="field-label">Room code</span>
+              <input
+                className="input code-input"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="e.g. KQ7X2P"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </label>
+            <button type="submit" className="btn btn-secondary btn-big">
+              Join as viewer
+            </button>
+            <p className="muted small">
+              Viewers only watch — no controls, enforced by database rules.
+            </p>
+          </form>
+        </section>
+      </main>
+
+      {error && (
+        <p className="error home-error" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}

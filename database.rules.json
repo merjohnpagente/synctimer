@@ -1,0 +1,46 @@
+{
+  "rules": {
+    "rooms": {
+      "$code": {
+        // Any signed-in user (anonymous auth counts) can READ a room.
+        // The room code in the link is the access secret.
+        ".read": "auth != null",
+
+        // CREATE: the creator must stamp themselves as owner, with a sane shape.
+        // $code is new here (!data.exists()).
+        ".write": "auth != null && (!data.exists() && newData.child('ownerId').val() === auth.uid && newData.child('durationMs').isNumber() && newData.child('durationMs').val() >= 5000 && newData.child('durationMs').val() <= 86400000)",
+
+        "name": { ".validate": "newData.isString() && newData.val().length <= 80" },
+        "durationMs": { ".validate": "newData.isNumber() && newData.val() >= 5000 && newData.val() <= 86400000" },
+        "remainingMs": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 86400000" },
+        "status": {
+          ".validate": "newData.isString() && (newData.val() === 'ready' || newData.val() === 'running' || newData.val() === 'paused' || newData.val() === 'finished' || newData.val() === 'ended')"
+        },
+        "endsAt": { ".validate": "newData.val() === null || newData.isNumber()" },
+        "ownerId": { ".validate": "newData.isString()" },
+        "updatedBy": { ".validate": "newData.isString()" },
+
+        // TIMER FIELDS: only the owner can ever change them.
+        // Viewers' writes are rejected here even if they bypass the UI.
+        "createdAt": { ".write": "auth != null && data.parent().child('ownerId').val() === auth.uid" },
+        "updatedAt": { ".write": "auth != null && data.parent().child('ownerId').val() === auth.uid" },
+
+        "participants": {
+          // Presence list: live, real data — no hardcoding.
+          // Anyone signed in can read who's connected.
+          ".read": "auth != null",
+          "$uid": {
+            // Users may only write their OWN presence entry.
+            // A viewer can never touch another entry or timer fields.
+            ".write": "auth != null && $uid === auth.uid",
+            ".validate": "newData.hasChildren(['name', 'role']) && (newData.child('role').val() === 'host' || newData.child('role').val() === 'viewer')"
+          }
+        },
+
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}
