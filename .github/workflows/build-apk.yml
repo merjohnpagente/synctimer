@@ -51,8 +51,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
+      # NOTE: GitHub-hosted ubuntu runners already ship with the Android SDK
+      # preinstalled ($ANDROID_HOME). The setup-android action was removed
+      # because it kept failing — plain Gradle works against the stock SDK.
+      - name: Ensure Android packages
+        run: |
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
+          yes | sdkmanager --licenses > /dev/null || true
 
       - name: Sync Capacitor assets
         run: npm run cap:sync
