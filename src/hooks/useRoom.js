@@ -19,6 +19,7 @@ import {
   clampDurationMs,
   computeElapsedMs,
   computeRemainingMs,
+  generateRoomCode,
   normalizeCode,
 } from '../lib/time'
 
