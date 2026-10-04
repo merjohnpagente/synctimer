@@ -754,6 +754,11 @@ body {
   list-style: none;
   padding-left: 0;
 }
+.dl-list li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 .dl-links {
   display: flex;
   flex-wrap: wrap;
@@ -786,4 +791,38 @@ body {
   gap: 6px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+/* ---------- QR scanner ---------- */
+.scanner-panel {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(2, 6, 12, 0.4);
+}
+.scanner-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.scanner-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.qr-reader {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.qr-reader video {
+  width: 100% !important;
+  border-radius: 12px;
+  display: block;
 }

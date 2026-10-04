@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Volume2, VolumeX } from 'lucide-react'
 import {
   STATUS_LABEL,
   ensureAudioUnlocked,
@@ -135,7 +136,15 @@ export function SoundControl() {
         aria-pressed={enabled}
         title={enabled ? 'Mute the finish alarm' : 'Unmute the finish alarm'}
       >
-        {enabled ? '🔔 Sound on' : '🔕 Muted'}
+        {enabled ? (
+          <>
+            <Volume2 size={16} aria-hidden="true" /> Sound on
+          </>
+        ) : (
+          <>
+            <VolumeX size={16} aria-hidden="true" /> Muted
+          </>
+        )}
       </button>
       {enabled && (
         <button

@@ -3,6 +3,8 @@ import { useAuth } from './hooks/useAuth'
 import { HomePage } from './pages/HomePage'
 import { AdminPage } from './pages/AdminPage'
 import { WatchPage } from './pages/WatchPage'
+import { DownloadPage } from './pages/DownloadPage'
+import { DEVELOPER } from './lib/site'
 
 // HashRouter: works on Firebase Hosting AND inside the Capacitor
 // Android WebView (file://), where BrowserRouter history breaks.
@@ -25,6 +27,7 @@ export default function App() {
             path="/watch/:code"
             element={<WatchPage uid={uid} authReady={ready} />}
           />
+          <Route path="/download" element={<DownloadPage />} />
           <Route
             path="*"
             element={
@@ -38,7 +41,7 @@ export default function App() {
           />
         </Routes>
         <footer className="app-footer">
-          <span>SyncTimer · countdown rooms synced over Firebase</span>
+          <span>SyncTimer · Developed by {DEVELOPER}</span>
         </footer>
       </div>
     </HashRouter>

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { ConnectionBadge, SoundControl, TimerFace } from './common'
 import {
   STATUS,
@@ -129,6 +131,12 @@ export function ViewerDashboard({ code, room, remainingMs, effectiveStatus, conn
           {effectiveStatus === STATUS.FINISHED && "Time's up!"}
           {effectiveStatus === STATUS.ENDED && 'This session has ended.'}
         </p>
+        {(effectiveStatus === STATUS.FINISHED ||
+          effectiveStatus === STATUS.ENDED) && (
+          <Link className="btn btn-secondary" to="/">
+            <ArrowLeft size={18} aria-hidden="true" /> Back to home
+          </Link>
+        )}
       </main>
     </div>
   )

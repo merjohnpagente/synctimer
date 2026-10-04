@@ -1,5 +1,7 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Camera, Smartphone } from 'lucide-react'
+import { QrScanner, extractCodeFromScan } from '../components/QrScanner'
 import { isFirebaseConfigured } from '../lib/firebase'
 import { createRoom } from '../hooks/useRoom'
 import { clampDurationMs, normalizeCode } from '../lib/time'
@@ -29,6 +31,8 @@ export function HomePage({ uid, authReady, authError }) {
   const [displayName, setDisplayName] = useState(loadName)
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState(null)
+  const [scanning, setScanning] = useState(false)
+  const [scanError, setScanError] = useState(null)
 
   const persistName = (v) => {
     setDisplayName(v)
@@ -72,6 +76,19 @@ export function HomePage({ uid, authReady, authError }) {
     navigate(`/watch/${clean}`)
   }
 
+  const handleScan = useCallback(
+    (text) => {
+      const code = extractCodeFromScan(text)
+      if (!code) {
+        setScanError('That QR code has no room code. Try again.')
+        return
+      }
+      setScanning(false)
+      navigate(`/watch/${code}`)
+    },
+    [navigate],
+  )
+
   return (
     <div className="theme-host home">
       <header className="home-hero">
@@ -81,6 +98,11 @@ export function HomePage({ uid, authReady, authError }) {
           The host controls a countdown from the admin dashboard. Viewers join
           with a code or link and stay in sync in real time.
         </p>
+        <div className="home-cta-row">
+          <Link className="btn btn-secondary" to="/download">
+            <Smartphone size={18} aria-hidden="true" /> Get the Android app
+          </Link>
+        </div>
         {!isFirebaseConfigured && (
           <p className="notice" role="note">
             Demo mode: Firebase env vars are missing, so rooms only work on this
@@ -171,6 +193,27 @@ export function HomePage({ uid, authReady, authError }) {
             <button type="submit" className="btn btn-secondary btn-big">
               Join as viewer
             </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-big"
+              onClick={() => {
+                setScanError(null)
+                setScanning(true)
+              }}
+            >
+              <Camera size={18} aria-hidden="true" /> Scan QR instead
+            </button>
+            {scanning && (
+              <QrScanner
+                onScan={handleScan}
+                onClose={() => setScanning(false)}
+              />
+            )}
+            {scanError && (
+              <p className="error" role="alert">
+                {scanError}
+              </p>
+            )}
             <p className="muted small">
               Viewers only watch — no controls, enforced by database rules.
             </p>

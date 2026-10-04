@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { ConnectionBadge, ParticipantsList, SoundControl, TimerFace } from './common'
 import {
@@ -266,6 +268,11 @@ export function HostDashboard({
                 End session
               </button>
             ))}
+          {effectiveStatus === STATUS.ENDED && (
+            <Link className="btn btn-secondary" to="/">
+              <ArrowLeft size={18} aria-hidden="true" /> Back to home
+            </Link>
+          )}
         </section>
 
         <aside className="side-section">
