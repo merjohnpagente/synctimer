@@ -1,4 +1,11 @@
-import { STATUS_LABEL } from '../lib/time'
+import { useState } from 'react'
+import {
+  STATUS_LABEL,
+  ensureAudioUnlocked,
+  isSoundEnabled,
+  playFinishChime,
+  setSoundEnabled,
+} from '../lib/time'
 
 export function ConnectionBadge({ connected, role }) {
   return (
@@ -90,5 +97,57 @@ export function ParticipantsList({ participants }) {
         </li>
       ))}
     </ul>
+  )
+}
+
+/**
+ * Sound on/off toggle + Test button.
+ * Tapping Test both previews the finish alarm AND unlocks browser audio,
+ * so the real alarm can be heard when the timer ends.
+ */
+export function SoundControl() {
+  const [enabled, setEnabled] = useState(() => isSoundEnabled())
+  const [testing, setTesting] = useState(false)
+
+  const toggle = () => {
+    const next = !enabled
+    setEnabled(next)
+    setSoundEnabled(next)
+    if (next) {
+      ensureAudioUnlocked()
+      playFinishChime(2)
+    }
+  }
+
+  const test = () => {
+    ensureAudioUnlocked()
+    setTesting(true)
+    playFinishChime(2)
+    setTimeout(() => setTesting(false), 1200)
+  }
+
+  return (
+    <div className="sound-ctl">
+      <button
+        type="button"
+        className="btn btn-ghost btn-small"
+        onClick={toggle}
+        aria-pressed={enabled}
+        title={enabled ? 'Mute the finish alarm' : 'Unmute the finish alarm'}
+      >
+        {enabled ? '🔔 Sound on' : '🔕 Muted'}
+      </button>
+      {enabled && (
+        <button
+          type="button"
+          className="btn btn-ghost btn-small"
+          onClick={test}
+          disabled={testing}
+          title="Preview the finish alarm"
+        >
+          {testing ? 'Playing…' : 'Test'}
+        </button>
+      )}
+    </div>
   )
 }

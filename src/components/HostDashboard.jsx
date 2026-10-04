@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
-import { ConnectionBadge, ParticipantsList, TimerFace } from './common'
+import { ConnectionBadge, ParticipantsList, SoundControl, TimerFace } from './common'
 import {
   STATUS,
+  installAudioUnlock,
   inviteLinkFor,
   playFinishChime,
   vibrateOnFinish,
@@ -104,9 +105,14 @@ export function HostDashboard({
   const [busy, setBusy] = useState('')
   const [actionError, setActionError] = useState(null)
   const [confirmEnd, setConfirmEnd] = useState(false)
-  const prevStatus = useRef(effectiveStatus)
+  const prevStatus = useRef(null)
 
-  // Celebrate exactly once per finish.
+  // First tap anywhere unlocks browser audio so the alarm can be heard.
+  useEffect(() => {
+    installAudioUnlock()
+  }, [])
+
+  // Alarm exactly once per finish (also if opened while already finished).
   useEffect(() => {
     if (
       prevStatus.current !== STATUS.FINISHED &&
@@ -145,7 +151,10 @@ export function HostDashboard({
             </span>
           </div>
         </div>
-        <ConnectionBadge connected={connected} role="host" />
+        <div className="dash-head-right">
+          <ConnectionBadge connected={connected} role="host" />
+          <SoundControl />
+        </div>
       </header>
 
       <main className="dash-grid">

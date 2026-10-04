@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { ConnectionBadge, TimerFace } from './common'
+import { ConnectionBadge, SoundControl, TimerFace } from './common'
 import {
   STATUS,
+  installAudioUnlock,
   playFinishChime,
   progressFraction,
   vibrateOnFinish,
@@ -14,8 +15,14 @@ import {
  */
 export function ViewerDashboard({ code, room, remainingMs, effectiveStatus, connected }) {
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const prevStatus = useRef(effectiveStatus)
+  const prevStatus = useRef(null)
 
+  // First tap anywhere unlocks browser audio so the alarm can be heard.
+  useEffect(() => {
+    installAudioUnlock()
+  }, [])
+
+  // Alarm exactly once per finish (also if opened while already finished).
   useEffect(() => {
     if (
       prevStatus.current !== STATUS.FINISHED &&
@@ -82,6 +89,7 @@ export function ViewerDashboard({ code, room, remainingMs, effectiveStatus, conn
         </div>
         <div className="viewer-badges">
           <ConnectionBadge connected={connected} role="viewer" />
+          <SoundControl />
           <button
             type="button"
             className="btn btn-ghost btn-small"

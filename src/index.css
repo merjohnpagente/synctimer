@@ -704,3 +704,86 @@ body {
     animation: none;
   }
 }
+
+/* ---------- download page ---------- */
+.download {
+  padding: 32px 16px 40px;
+  max-width: 1020px;
+  margin: 0 auto;
+  width: 100%;
+}
+.home-cta-row {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.dl-hero h1 {
+  font-size: clamp(30px, 6vw, 52px);
+  margin: 8px 0 10px;
+  letter-spacing: -0.02em;
+}
+.dl-hero p {
+  max-width: 640px;
+  font-size: 16px;
+}
+.dl-cta {
+  margin-top: 20px;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dl-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+.dl-steps,
+.dl-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.dl-list {
+  list-style: none;
+  padding-left: 0;
+}
+.dl-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+.dl-credit {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+}
+@media (min-width: 720px) {
+  .dl-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ---------- sound control ---------- */
+.dash-head-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.sound-ctl {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}

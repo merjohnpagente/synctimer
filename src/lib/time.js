@@ -82,31 +82,85 @@ export function progressFraction(room, now = Date.now()) {
   return Math.min(1, Math.max(0, 1 - remaining / room.durationMs))
 }
 
-let audioCtx = null
+const SOUND_KEY = 'synctimer-sound'
 
-/** Short chime on finish. Uses WebAudio so no asset files are needed. */
-export function playFinishChime(times = 3) {
+export function isSoundEnabled() {
+  try {
+    return localStorage.getItem(SOUND_KEY) !== 'off'
+  } catch {
+    return true
+  }
+}
+
+export function setSoundEnabled(on) {
+  try {
+    localStorage.setItem(SOUND_KEY, on ? 'on' : 'off')
+  } catch {
+    // ignore
+  }
+}
+
+let audioCtx = null
+let unlockInstalled = false
+
+function getCtx() {
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext
-    if (!Ctx) return
+    if (!Ctx) return null
     audioCtx = audioCtx || new Ctx()
     if (audioCtx.state === 'suspended') void audioCtx.resume()
-    const now = audioCtx.currentTime
+    return audioCtx
+  } catch {
+    return null
+  }
+}
+
+/** Call inside a real user tap (used by the Test button). */
+export function ensureAudioUnlocked() {
+  getCtx()
+}
+
+/**
+ * Browsers block sound until the user interacts with the page.
+ * Install once per dashboard: the first tap anywhere unlocks audio,
+ * so the finish alarm can actually be heard.
+ */
+export function installAudioUnlock() {
+  if (unlockInstalled || typeof window === 'undefined') return
+  unlockInstalled = true
+  const unlock = () => ensureAudioUnlocked()
+  window.addEventListener('pointerdown', unlock, { passive: true })
+  window.addEventListener('touchend', unlock, { passive: true })
+  window.addEventListener('keydown', unlock)
+}
+
+/**
+ * Insistent finish alarm (WebAudio, no asset files needed).
+ * Respects the sound toggle. Returns true if sound was played.
+ */
+export function playFinishChime(times = 5) {
+  if (!isSoundEnabled()) return false
+  try {
+    const ctx = getCtx()
+    if (!ctx) return false
+    const now = ctx.currentTime + 0.05
     for (let i = 0; i < times; i++) {
-      const osc = audioCtx.createOscillator()
-      const gain = audioCtx.createGain()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
       osc.type = 'sine'
-      osc.frequency.value = i % 2 === 0 ? 880 : 660
-      const t = now + i * 0.28
+      osc.frequency.value = i % 2 === 0 ? 880 : 659.25
+      const t = now + i * 0.32
       gain.gain.setValueAtTime(0.0001, t)
-      gain.gain.exponentialRampToValueAtTime(0.4, t + 0.02)
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.25)
-      osc.connect(gain).connect(audioCtx.destination)
+      gain.gain.exponentialRampToValueAtTime(0.5, t + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.29)
+      osc.connect(gain).connect(ctx.destination)
       osc.start(t)
-      osc.stop(t + 0.3)
+      osc.stop(t + 0.32)
     }
+    return true
   } catch {
     // Audio is best-effort (autoplay policies, headless envs).
+    return false
   }
 }
 
