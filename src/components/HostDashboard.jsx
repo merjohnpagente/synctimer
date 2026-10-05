@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, Expand, Square, X } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { ConnectionBadge, ParticipantsList, SoundControl, TimerFace } from './common'
+import { useHotkeys } from '../hooks/useHotkeys'
+import { useTimerTitle } from '../hooks/useTimerTitle'
 import {
   STATUS,
   installAudioUnlock,
@@ -208,6 +210,36 @@ export function HostDashboard({
     }
   }
 
+  useTimerTitle({
+    displayMs: remainingMs,
+    status: effectiveStatus,
+    name: room.name,
+    mode,
+  })
+
+  const togglePlay = () => {
+    if (busy) return
+    if (
+      effectiveStatus === STATUS.READY ||
+      effectiveStatus === STATUS.FINISHED
+    ) {
+      run('start', actions.start)
+    } else if (effectiveStatus === STATUS.RUNNING) {
+      run('pause', actions.pause)
+    } else if (effectiveStatus === STATUS.PAUSED) {
+      run('resume', actions.resume)
+    }
+  }
+
+  useHotkeys({
+    ' ': togglePlay,
+    k: togglePlay,
+    r: () => {
+      if (!busy && effectiveStatus !== STATUS.ENDED) run('reset', actions.reset)
+    },
+    escape: () => ringing && silence(),
+  })
+
   return (
     <div className="theme-host dashboard">
       <header className="dash-header">
@@ -322,6 +354,11 @@ export function HostDashboard({
             >
               <Square size={16} aria-hidden="true" /> Stop alarm
             </button>
+          )}
+          {effectiveStatus !== STATUS.ENDED && (
+            <p className="kbd-hint muted small" aria-hidden="true">
+              <kbd>Space</kbd> start / pause · <kbd>R</kbd> reset
+            </p>
           )}
           {effectiveStatus !== STATUS.ENDED &&
             (confirmEnd ? (

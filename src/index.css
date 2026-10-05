@@ -41,6 +41,24 @@ body {
   display: flex;
   flex-direction: column;
   animation: page-in 0.45s var(--ease);
+  background:
+    radial-gradient(
+      900px 480px at 50% -8%,
+      rgba(99, 102, 241, 0.22) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      700px 500px at 90% 110%,
+      rgba(139, 92, 246, 0.12) 0%,
+      transparent 60%
+    ),
+    #0b0e14;
+}
+.app-shell:has(.theme-viewer) {
+  background: linear-gradient(180deg, #ffffff 0%, #eef2ff 70%, #e0e7ff 100%);
+}
+.app-shell:has(.theme-viewer) .app-footer {
+  color: #64748b;
 }
 @keyframes page-in {
   from {
@@ -181,6 +199,54 @@ a:focus-visible {
   text-transform: uppercase;
   text-align: center;
 }
+.input::placeholder {
+  color: inherit;
+  opacity: 0.45;
+}
+.code-input::placeholder {
+  font-family: var(--sans);
+  font-size: 16px;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* ---------- segmented control ---------- */
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(2, 6, 12, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+.segmented-btn {
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+  transition:
+    background-color 0.2s var(--ease),
+    opacity 0.2s ease;
+}
+.segmented-btn:hover {
+  opacity: 1;
+}
+.segmented-btn.is-active {
+  background: linear-gradient(135deg, var(--accent1), var(--accent2));
+  color: #fff;
+  opacity: 1;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+.mode-hint {
+  margin: 0;
+}
 
 .field {
   display: flex;
@@ -234,6 +300,12 @@ a:focus-visible {
   background: transparent;
   color: inherit;
   cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+.chip-btn:hover {
+  border-color: rgba(165, 180, 252, 0.7);
 }
 .preset-row {
   display: flex;
@@ -351,6 +423,7 @@ a:focus-visible {
   position: relative;
   width: min(74vw, 320px);
   aspect-ratio: 1;
+  container-type: inline-size;
 }
 .timer-ring {
   width: 100%;
@@ -388,9 +461,14 @@ a:focus-visible {
   font-variant-numeric: tabular-nums;
   font-weight: 750;
   font-size: clamp(52px, 15vw, 76px);
+  font-size: 19cqi;
   letter-spacing: 0.5px;
   line-height: 1;
   text-shadow: 0 2px 24px rgba(99, 102, 241, 0.35);
+}
+.timer-main.has-hours {
+  font-size: clamp(36px, 10vw, 52px);
+  font-size: 13.5cqi;
 }
 .timer-tenths {
   font-size: 0.4em;
@@ -417,18 +495,6 @@ a:focus-visible {
 
 /* ---------- host theme ---------- */
 .theme-host {
-  background:
-    radial-gradient(
-      900px 480px at 50% -8%,
-      rgba(99, 102, 241, 0.22) 0%,
-      transparent 60%
-    ),
-    radial-gradient(
-      700px 500px at 90% 110%,
-      rgba(139, 92, 246, 0.12) 0%,
-      transparent 60%
-    ),
-    #0b0e14;
   color: #e8ebf3;
   min-height: 100svh;
 }
@@ -527,14 +593,30 @@ a:focus-visible {
   box-shadow: var(--shadow-soft);
 }
 .controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   width: 100%;
   max-width: 440px;
 }
+.controls .btn {
+  flex: 1 1 0;
+  min-width: 90px;
+}
 .controls .btn-big {
-  grid-column: 1 / -1;
+  flex-basis: 100%;
+}
+.kbd-hint {
+  margin: 0;
+  text-align: center;
+}
+kbd {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-bottom-width: 2px;
 }
 .end-confirm {
   display: flex;
@@ -623,7 +705,6 @@ a:focus-visible {
 
 /* ---------- viewer theme ---------- */
 .theme-viewer {
-  background: linear-gradient(180deg, #ffffff 0%, #eef2ff 70%, #e0e7ff 100%);
   color: #0f172a;
   min-height: 100svh;
 }
@@ -733,6 +814,18 @@ a:focus-visible {
   background: linear-gradient(90deg, #6366f1, #22c55e);
   transition: width 0.2s linear;
 }
+.viewer .timer-ring-wrap {
+  width: min(86vw, 58svh, 620px);
+}
+.viewer.is-fullscreen .timer-ring-wrap {
+  width: min(90vw, 74svh, 860px);
+}
+.viewer .status-pill {
+  font-size: clamp(13px, 3.4cqi, 20px);
+}
+.viewer .timer-elapsed {
+  font-size: clamp(14px, 3.6cqi, 20px);
+}
 .viewer-hint {
   font-size: 15px;
   color: #64748b;
@@ -762,12 +855,6 @@ a:focus-visible {
   .timer-ring-wrap {
     width: min(40vw, 380px);
   }
-  .viewer .timer-ring-wrap {
-    width: min(60vw, 420px);
-  }
-  .viewer .timer-main {
-    font-size: clamp(64px, 10vw, 96px);
-  }
 }
 
 @media (min-width: 1100px) {
@@ -775,6 +862,18 @@ a:focus-visible {
   .home {
     padding-left: 28px;
     padding-right: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hide-narrow {
+    display: none;
+  }
+}
+
+@media (hover: none) {
+  .kbd-hint {
+    display: none;
   }
 }
 

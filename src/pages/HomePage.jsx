@@ -1,12 +1,17 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Camera, Smartphone } from 'lucide-react'
-import { QrScanner, extractCodeFromScan } from '../components/QrScanner'
 import { UpdateBanner } from '../components/UpdateBanner'
 import { isFirebaseConfigured } from '../lib/firebase'
 import { APP_VERSION, isNativeApp } from '../lib/site'
 import { createRoom } from '../hooks/useRoom'
 import { clampDurationMs, normalizeCode } from '../lib/time'
+import { extractCodeFromScan } from '../lib/scan'
+
+// Camera library is heavy — only load it when someone taps "Scan QR".
+const QrScanner = lazy(() =>
+  import('../components/QrScanner').then((m) => ({ default: m.QrScanner })),
+)
 
 const PRESETS = [
   { label: '1 min', ms: 60_000 },
@@ -65,6 +70,10 @@ export function HomePage({ uid, authReady, authError }) {
     setError(null)
     if (!uid) {
       setError('Signing you in… please try again in a second.')
+      return
+    }
+    if (timerMode === 'countdown' && !(Number(minutes) > 0)) {
+      setError('Enter a duration of at least 1 minute.')
       return
     }
     setCreating(true)
@@ -149,7 +158,7 @@ export function HomePage({ uid, authReady, authError }) {
 
       <main className="home-grid">
         <section className="card" aria-label="Admin: create a room">
-          <h2 className="card-title">Admin — create a room</h2>
+          <h2 className="card-title">Host a timer</h2>
           <form onSubmit={handleCreate} className="form">
             <label className="field">
               <span className="field-label">Timer name</span>
@@ -161,31 +170,7 @@ export function HomePage({ uid, authReady, authError }) {
                 maxLength={80}
               />
             </label>
-            <label className="field">
-              <span className="field-label">Duration (minutes)</span>
-              <input
-                className="input"
-                type="number"
-                min={1}
-                max={1440}
-                value={minutes}
-                onChange={(e) => setMinutes(e.target.value)}
-                inputMode="numeric"
-              />
-            </label>
-            <div className="preset-row" role="group" aria-label="Presets">
-              {PRESETS.map((p) => (
-                <button
-                  key={p.label}
-                  type="button"
-                  className="chip-btn"
-                  onClick={() => setMinutes(p.ms / 60_000)}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-            <div className="preset-row" role="group" aria-label="Timer mode">
+            <div className="segmented" role="group" aria-label="Timer mode">
               {[
                 { value: 'countdown', label: 'Countdown' },
                 { value: 'stopwatch', label: 'Stopwatch' },
@@ -193,7 +178,7 @@ export function HomePage({ uid, authReady, authError }) {
                 <button
                   key={m.value}
                   type="button"
-                  className={`chip-btn${timerMode === m.value ? ' is-active' : ''}`}
+                  className={`segmented-btn${timerMode === m.value ? ' is-active' : ''}`}
                   aria-pressed={timerMode === m.value}
                   onClick={() => setTimerMode(m.value)}
                 >
@@ -201,18 +186,54 @@ export function HomePage({ uid, authReady, authError }) {
                 </button>
               ))}
             </div>
+            {timerMode === 'countdown' ? (
+              <>
+                <label className="field">
+                  <span className="field-label">Duration (minutes)</span>
+                  <input
+                    className="input"
+                    type="number"
+                    min={1}
+                    max={1440}
+                    value={minutes}
+                    onChange={(e) => setMinutes(e.target.value)}
+                    inputMode="numeric"
+                  />
+                </label>
+                <div className="preset-row" role="group" aria-label="Presets">
+                  {PRESETS.map((p) => {
+                    const active = Number(minutes) === p.ms / 60_000
+                    return (
+                      <button
+                        key={p.label}
+                        type="button"
+                        className={`chip-btn${active ? ' is-active' : ''}`}
+                        aria-pressed={active}
+                        onClick={() => setMinutes(p.ms / 60_000)}
+                      >
+                        {p.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            ) : (
+              <p className="muted small mode-hint">
+                Counts up from 00:00 until you pause or end it.
+              </p>
+            )}
             <button
               type="submit"
               className="btn btn-primary btn-big"
               disabled={creating || !authReady}
             >
-              {creating ? 'Creating…' : 'Create room & open dashboard'}
+              {creating ? 'Creating…' : 'Create room'}
             </button>
           </form>
         </section>
 
         <section className="card" aria-label="Viewer: join a room">
-          <h2 className="card-title">Viewer — join a room</h2>
+          <h2 className="card-title">Join a timer</h2>
           <form onSubmit={handleJoin} className="form">
             <label className="field">
               <span className="field-label">Your name (shown to host)</span>
@@ -250,10 +271,14 @@ export function HomePage({ uid, authReady, authError }) {
               <Camera size={18} aria-hidden="true" /> Scan QR instead
             </button>
             {scanning && (
-              <QrScanner
-                onScan={handleScan}
-                onClose={() => setScanning(false)}
-              />
+              <Suspense
+                fallback={<p className="muted small">Starting camera…</p>}
+              >
+                <QrScanner
+                  onScan={handleScan}
+                  onClose={() => setScanning(false)}
+                />
+              </Suspense>
             )}
             {scanError && (
               <p className="error" role="alert">
