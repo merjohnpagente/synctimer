@@ -1,8 +1,10 @@
 /**
  * Countdown-only time utilities.
- * Sync model: the host writes { status, endsAt, remainingMs }.
- * Every client renders remaining = endsAt - Date.now() while running,
- * so all devices converge without syncing every tick.
+ * Sync model: the host writes { status, endsAt, remainingMs } with endsAt in
+ * Firebase SERVER time. Every client renders remaining = endsAt - serverNow
+ * (device clock + .info/serverTimeOffset), so phones with wrong clocks still
+ * stay in sync without syncing every tick. Stopwatch rooms use
+ * { status, startedAt, elapsedBaseMs } the same way (count-up).
  */
 
 export const STATUS = {

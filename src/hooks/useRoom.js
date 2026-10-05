@@ -57,30 +57,40 @@ export function useRoom(code, uid, displayName = 'Guest') {
   const [participants, setParticipants] = useState([])
   const [connected, setConnected] = useState(navigator.onLine !== false)
   const [now, setNow] = useState(() => Date.now())
+  // Offset between this device's clock and the Firebase server clock.
+  // ALL countdown math uses server time, so phones with wrong clocks
+  // still stay perfectly in sync with each other.
+  const [timeOffset, setTimeOffset] = useState(0)
   const finishWrittenRef = useRef(false)
 
   const isOwner = Boolean(room && uid && room.ownerId === uid)
   // Absent mode = countdown (rooms created before stopwatch existed).
   const mode = room && room.mode === 'stopwatch' ? 'stopwatch' : 'countdown'
   const isStopwatch = mode === 'stopwatch'
+  // Server clock: device clock + Firebase-measured offset. Null-safe.
+  const serverNow = now + (typeof timeOffset === 'number' ? timeOffset : 0)
   const remainingMs = useMemo(
-    () => computeRemainingMs(room, now),
-    [room, now],
+    () => computeRemainingMs(room, serverNow),
+    [room, serverNow],
   )
-  const elapsedMs = useMemo(() => computeElapsedMs(room, now), [room, now])
+  const elapsedMs = useMemo(
+    () => computeElapsedMs(room, serverNow),
+    [room, serverNow],
+  )
   // What the big digits show: count-up for stopwatch, count-down otherwise.
   const displayMs = isStopwatch ? elapsedMs : remainingMs
   const effectiveStatus = useMemo(() => {
     if (!room) return STATUS.READY
     if (
+      !isStopwatch &&
       room.status === STATUS.RUNNING &&
       typeof room.endsAt === 'number' &&
-      room.endsAt <= Date.now() + 250
+      room.endsAt <= serverNow + 250
     ) {
       return STATUS.FINISHED
     }
     return room.status || STATUS.READY
-  }, [room])
+  }, [room, serverNow, isStopwatch])
 
   // ---- live subscription ----
   useEffect(() => {
@@ -143,10 +153,18 @@ export function useRoom(code, uid, displayName = 'Guest') {
       setConnected(snap.val() === true)
     })
 
+    // Server clock offset (ms): serverTime - deviceTime. Refreshed live.
+    const offsetRef = ref(db, '.info/serverTimeOffset')
+    const unsubOffset = onValue(offsetRef, (snap) => {
+      const v = snap.val()
+      setTimeOffset(typeof v === 'number' ? v : 0)
+    })
+
     return () => {
       unsubRoom()
       unsubList()
       unsubConn()
+      unsubOffset()
     }
   }, [cleanCode])
 
@@ -194,14 +212,15 @@ export function useRoom(code, uid, displayName = 'Guest') {
 
   // ---- host auto-marks finished when the countdown hits zero ----
   // (countdown only — a stopwatch never finishes on its own)
+  // Driven by the local ticker (remainingMs), not just by DB updates,
+  // so it fires even when nothing else changes in the room.
   useEffect(() => {
     if (!room || !isOwner || isStopwatch) return
     if (room.status !== STATUS.RUNNING) {
       finishWrittenRef.current = false
       return
     }
-    if (typeof room.endsAt !== 'number') return
-    if (Date.now() < room.endsAt) {
+    if (remainingMs > 0) {
       finishWrittenRef.current = false
       return
     }
@@ -211,7 +230,7 @@ export function useRoom(code, uid, displayName = 'Guest') {
       finishWrittenRef.current = false
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room?.status, room?.endsAt, isOwner, isStopwatch])
+  }, [room?.status, isOwner, isStopwatch, remainingMs])
 
   const guardOwner = useCallback(() => {
     if (!room) throw new Error('Room not loaded yet.')
@@ -256,7 +275,7 @@ export function useRoom(code, uid, displayName = 'Guest') {
           : 0
       await writeRoom({
         status: STATUS.RUNNING,
-        startedAt: Date.now(),
+        startedAt: Date.now() + timeOffset,
         elapsedBaseMs: Math.max(0, base),
       })
       return
@@ -265,10 +284,10 @@ export function useRoom(code, uid, displayName = 'Guest') {
     const safe = clampDurationMs(base ?? room.durationMs)
     await writeRoom({
       status: STATUS.RUNNING,
-      endsAt: Date.now() + safe,
+      endsAt: Date.now() + timeOffset + safe,
       remainingMs: safe,
     })
-  }, [guardOwner, room, writeRoom, isStopwatch])
+  }, [guardOwner, room, writeRoom, isStopwatch, timeOffset])
 
   const pause = useCallback(async () => {
     guardOwner()
@@ -276,7 +295,11 @@ export function useRoom(code, uid, displayName = 'Guest') {
     if (isStopwatch) {
       const elapsed =
         typeof room.startedAt === 'number'
-          ? Math.max(0, (room.elapsedBaseMs ?? 0) + (Date.now() - room.startedAt))
+          ? Math.max(
+              0,
+              (room.elapsedBaseMs ?? 0) +
+                (Date.now() + timeOffset - room.startedAt),
+            )
           : (room.elapsedBaseMs ?? 0)
       await writeRoom({
         status: STATUS.PAUSED,
@@ -287,10 +310,10 @@ export function useRoom(code, uid, displayName = 'Guest') {
     }
     const left =
       typeof room.endsAt === 'number'
-        ? Math.max(0, room.endsAt - Date.now())
+        ? Math.max(0, room.endsAt - (Date.now() + timeOffset))
         : (room.remainingMs ?? 0)
     await writeRoom({ status: STATUS.PAUSED, remainingMs: left, endsAt: null })
-  }, [guardOwner, room, writeRoom, isStopwatch])
+  }, [guardOwner, room, writeRoom, isStopwatch, timeOffset])
 
   const resume = useCallback(async () => {
     guardOwner()
@@ -298,7 +321,7 @@ export function useRoom(code, uid, displayName = 'Guest') {
     if (isStopwatch) {
       await writeRoom({
         status: STATUS.RUNNING,
-        startedAt: Date.now(),
+        startedAt: Date.now() + timeOffset,
         elapsedBaseMs: Math.max(0, room.elapsedBaseMs ?? 0),
       })
       return
@@ -306,10 +329,10 @@ export function useRoom(code, uid, displayName = 'Guest') {
     const safe = Math.max(0, room.remainingMs ?? 0)
     await writeRoom({
       status: STATUS.RUNNING,
-      endsAt: Date.now() + safe,
+      endsAt: Date.now() + timeOffset + safe,
       remainingMs: safe,
     })
-  }, [guardOwner, room, writeRoom, isStopwatch])
+  }, [guardOwner, room, writeRoom, isStopwatch, timeOffset])
 
   const reset = useCallback(async () => {
     guardOwner()
@@ -361,6 +384,7 @@ export function useRoom(code, uid, displayName = 'Guest') {
     participants,
     connected,
     now,
+    serverOffsetMs: timeOffset,
     mode,
     remainingMs,
     elapsedMs,

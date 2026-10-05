@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Square } from 'lucide-react'
+import { ArrowLeft, Expand, Square, X } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { ConnectionBadge, ParticipantsList, SoundControl, TimerFace } from './common'
 import {
@@ -36,6 +36,7 @@ async function copyText(text) {
 export function SharePanel({ code }) {
   const link = inviteLinkFor(code)
   const [copied, setCopied] = useState('')
+  const [zoomed, setZoomed] = useState(false)
   const timer = useRef(null)
 
   useEffect(() => () => clearTimeout(timer.current), [])
@@ -81,12 +82,49 @@ export function SharePanel({ code }) {
         </button>
       </div>
       <div className="qr-wrap">
-        <QRCodeSVG value={link} size={132} aria-label="QR code for invite link" />
+        <button
+          type="button"
+          className="qr-zoom-btn"
+          onClick={() => setZoomed(true)}
+          aria-label="Show QR code full screen"
+        >
+          <QRCodeSVG value={link} size={180} aria-hidden="true" />
+          <span className="qr-zoom-hint">
+            <Expand size={14} aria-hidden="true" /> Tap to enlarge
+          </span>
+        </button>
         <p className="muted small">
           Viewers scan to join read-only. They can never control the timer —
           enforced by database rules.
         </p>
       </div>
+      {zoomed && (
+        <div
+          className="qr-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Room QR code enlarged"
+          onClick={() => setZoomed(false)}
+        >
+          <div className="qr-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="room-code">{code}</div>
+            <QRCodeSVG
+              value={link}
+              size={320}
+              className="qr-modal-img"
+              aria-label="QR code for invite link"
+            />
+            <p className="muted small">Scan to join as viewer</p>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setZoomed(false)}
+            >
+              <X size={16} aria-hidden="true" /> Close
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
