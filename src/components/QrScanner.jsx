@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
-import { Camera, Upload, X } from 'lucide-react'
+import { Camera, Copy, ExternalLink, Upload, X } from 'lucide-react'
 
 /**
  * Pull a room code out of scanned text. Accepts our full invite links
@@ -27,77 +27,152 @@ function friendlyCameraError(err) {
   if (/secure|https/i.test(msg))
     return 'Insecure page: the camera only works over HTTPS. Open the Vercel link (https://…) instead of plain http.'
   if (name === 'NotAllowedError' || /denied|permission/i.test(msg))
-    return 'Camera blocked. Allow camera access for this site in your browser settings, then try again.'
+    return 'Camera blocked. Allow camera access for this site in your browser settings, then try again — or use “Upload QR image” below.'
   if (name === 'NotFoundError' || /no .*camera|device not found/i.test(msg))
     return 'No camera found on this device. Use “Upload QR image” below instead.'
   if (name === 'NotReadableError' || /in use|busy/i.test(msg))
     return 'Camera is busy (another app may be using it). Close it and try again.'
-  return 'Could not start the camera. Use “Upload QR image” below instead.'
+  return 'Could not start the camera. Try another camera below, or use “Upload QR image”.'
+}
+
+/** In-app browsers (Messenger/Facebook/Instagram) usually block the camera. */
+function isInAppBrowser() {
+  try {
+    const ua = navigator.userAgent || ''
+    return /FBAN|FBAV|FB_IAB|Instagram|Line\/|MiuiBrowser|Quark/i.test(ua)
+  } catch {
+    return false
+  }
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    return false
+  }
 }
 
 /**
- * Live camera QR scanner. Calls onScan(decodedText) once per successful scan.
+ * Live camera QR scanner with camera selector + constraint fallbacks +
+ * photo-upload fallback. Calls onScan(decodedText) once per success.
  * Parent navigates away on success, which unmounts and stops the camera.
  */
 export function QrScanner({ onScan, onClose }) {
   const [error, setError] = useState(null)
   const [starting, setStarting] = useState(true)
+  const [cameras, setCameras] = useState([])
+  const [scanMsg, setScanMsg] = useState(null)
+  const [linkCopied, setLinkCopied] = useState(false)
+  const [inApp] = useState(() => isInAppBrowser())
   const handledRef = useRef(false)
   const fileRef = useRef(null)
-  const [scanMsg, setScanMsg] = useState(null)
+  const cancelledRef = useRef(false)
+  const scannerRef = useRef(null)
+  const onScanRef = useRef(onScan)
+  onScanRef.current = onScan
 
-  useEffect(() => {
-    let cancelled = false
-    let qr = null
-    ;(async () => {
-      try {
-        if (
-          typeof window !== 'undefined' &&
-          window.isSecureContext === false
-        ) {
-          throw new Error(
-            'Insecure page: the camera only works over HTTPS. Open the Vercel link (https://…) instead of plain http.',
-          )
-        }
-        qr = new Html5Qrcode('synctimer-qr-reader')
-        await qr.start(
-          { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 280, height: 280 } },
-          (decodedText) => {
-            if (cancelled || handledRef.current) return
-            handledRef.current = true
-            onScan(decodedText)
-          },
-          () => {
-            // per-frame decode misses — ignore
-          },
+  const stopScanner = async () => {
+    const qr = scannerRef.current
+    scannerRef.current = null
+    if (!qr) return
+    try {
+      const p = qr.stop()
+      if (p && typeof p.catch === 'function') await p.catch(() => {})
+    } catch {
+      // ignore
+    }
+    try {
+      qr.clear()
+    } catch {
+      // ignore
+    }
+  }
+
+  const boot = useCallback(async (targetId) => {
+    await stopScanner()
+    if (cancelledRef.current) return
+    setStarting(true)
+    setError(null)
+    try {
+      if (typeof window !== 'undefined' && window.isSecureContext === false) {
+        throw new Error(
+          'Insecure page: the camera only works over HTTPS. Open the Vercel link (https://…) instead of plain http.',
         )
-        if (!cancelled) setStarting(false)
-      } catch (err) {
-        if (!cancelled) {
-          setStarting(false)
-          setError(friendlyCameraError(err))
-          console.error('[SyncTimer] scanner failed:', err)
+      }
+      const qr = new Html5Qrcode('synctimer-qr-reader')
+      scannerRef.current = qr
+      // Try back camera first, then any camera — never fail on one bad guess.
+      const attempts =
+        targetId && targetId !== 'auto'
+          ? [{ deviceId: { exact: targetId } }, { deviceId: targetId }]
+          : [
+              { facingMode: { exact: 'environment' } },
+              { facingMode: { ideal: 'environment' } },
+              {},
+            ]
+      let lastErr = null
+      let started = false
+      for (const constraint of attempts) {
+        try {
+          await qr.start(
+            constraint,
+            { fps: 10, qrbox: { width: 280, height: 280 } },
+            (decodedText) => {
+              if (cancelledRef.current || handledRef.current) return
+              handledRef.current = true
+              onScanRef.current(decodedText)
+            },
+            () => {
+              // per-frame decode misses — ignore
+            },
+          )
+          started = true
+          break
+        } catch (e) {
+          lastErr = e
         }
       }
-    })()
-    return () => {
-      cancelled = true
-      if (qr) {
-        try {
-          const p = qr.stop()
-          if (p && typeof p.catch === 'function') p.catch(() => {})
-        } catch {
-          // ignore
-        }
-        try {
-          qr.clear()
-        } catch {
-          // ignore
-        }
+      if (!started) throw lastErr
+      if (!cancelledRef.current) setStarting(false)
+    } catch (err) {
+      if (!cancelledRef.current) {
+        setStarting(false)
+        setError(friendlyCameraError(err))
+        console.error('[SyncTimer] scanner failed:', err)
       }
     }
-  }, [onScan])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // List cameras once, prefer a rear one, then start.
+  useEffect(() => {
+    cancelledRef.current = false
+    ;(async () => {
+      let list = []
+      try {
+        list = await Html5Qrcode.getCameras()
+      } catch {
+        // getCameras needs permission on some browsers — boot() retries anyway
+      }
+      if (cancelledRef.current) return
+      const found = list || []
+      setCameras(found)
+      const rear = found.find((c) => /back|rear|environment/i.test(c.label || ''))
+      await boot(rear ? rear.id : 'auto')
+    })()
+    return () => {
+      cancelledRef.current = true
+      stopScanner()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boot])
+
+  const switchCamera = (id) => {
+    handledRef.current = false
+    boot(id)
+  }
 
   // Fallback: decode a QR from an uploaded photo/screenshot.
   const onFile = async (e) => {
@@ -111,6 +186,14 @@ export function QrScanner({ onScan, onClose }) {
       onScan(text)
     } catch {
       setScanMsg('No QR code found in that image. Try a clearer photo.')
+    }
+  }
+
+  const copyLink = async () => {
+    const ok = await copyText(window.location.href)
+    if (ok) {
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
     }
   }
 
@@ -129,11 +212,31 @@ export function QrScanner({ onScan, onClose }) {
           <X size={16} aria-hidden="true" />
         </button>
       </div>
+
+      {inApp && (
+        <p className="notice" role="note">
+          You seem to be inside Facebook/Messenger’s browser, which blocks the
+          camera. Tap below to copy this page’s link, then open it in{' '}
+          <strong>Chrome</strong> and scan from there.
+          <br />
+          <button
+            type="button"
+            className="btn btn-ghost btn-small"
+            onClick={copyLink}
+            style={{ marginTop: 8 }}
+          >
+            <Copy size={14} aria-hidden="true" />{' '}
+            {linkCopied ? 'Link copied!' : 'Copy page link'}
+          </button>
+        </p>
+      )}
+
       {error && (
         <p className="error" role="alert">
           {error}
         </p>
       )}
+
       {!error && (
         <>
           {starting && <p className="muted small">Starting camera…</p>}
@@ -143,6 +246,28 @@ export function QrScanner({ onScan, onClose }) {
           </p>
         </>
       )}
+
+      {cameras.length > 1 && (
+        <label className="field">
+          <span className="field-label">Camera</span>
+          <select
+            className="input"
+            onChange={(e) => switchCamera(e.target.value)}
+            defaultValue=""
+            aria-label="Choose camera"
+          >
+            <option value="" disabled>
+              Switch camera…
+            </option>
+            {cameras.map((c) => (
+              <option key={c.id} value={c.id}>
+                {(c.label || 'Camera').slice(0, 60)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
       <div className="scanner-upload">
         <input
           ref={fileRef}
@@ -159,6 +284,14 @@ export function QrScanner({ onScan, onClose }) {
         >
           <Upload size={16} aria-hidden="true" /> Upload QR image
         </button>
+        <a
+          className="btn btn-ghost btn-small"
+          href={window.location.href}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <ExternalLink size={14} aria-hidden="true" /> Open in browser
+        </a>
       </div>
       {scanMsg && (
         <p className="error" role="alert">
