@@ -241,9 +241,36 @@ export function vibrateOnFinish() {
   }
 }
 
+/**
+ * True only inside the installed native app (Capacitor WebView injects
+ * window.Capacitor). The public website never has it.
+ */
+export function isNativeApp() {
+  try {
+    const cap = window.Capacitor
+    return (
+      cap != null &&
+      typeof cap.isNativePlatform === 'function' &&
+      cap.isNativePlatform() === true
+    )
+  } catch {
+    return false
+  }
+}
+
+// Public website origin used for share links. Inside the native app,
+// window.location.origin is https://localhost (useless to share), so we
+// use the real website address instead (overridable via env).
+const PUBLIC_WEB_ORIGIN = 'https://johntimer.vercel.app'
+
 export function inviteLinkFor(code) {
   // HashRouter is used (APK file:// compatible), so the route must sit
   // after /#/ — a plain /watch/CODE path would 404 on static hosts.
   const clean = normalizeCode(code)
-  return `${window.location.origin}/#/watch/${clean}`
+  const origin = isNativeApp()
+    ? String(
+        import.meta.env.VITE_PUBLIC_WEB_URL || PUBLIC_WEB_ORIGIN,
+      ).replace(/\/$/, '')
+    : window.location.origin
+  return `${origin}/#/watch/${clean}`
 }
