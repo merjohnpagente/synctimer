@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Camera, Smartphone } from 'lucide-react'
 import { QrScanner, extractCodeFromScan } from '../components/QrScanner'
@@ -36,6 +36,20 @@ export function HomePage({ uid, authReady, authError }) {
   const [error, setError] = useState(null)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState(null)
+
+  // Support share links like ?join=ABC123 (query links survive apps such
+  // as Messenger that sometimes strip #fragments from shared URLs).
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search)
+      const j = normalizeCode(
+        q.get('join') || q.get('code') || q.get('room') || '',
+      )
+      if (j) navigate(`/watch/${j}`, { replace: true })
+    } catch {
+      // ignore malformed URLs
+    }
+  }, [navigate])
 
   const persistName = (v) => {
     setDisplayName(v)

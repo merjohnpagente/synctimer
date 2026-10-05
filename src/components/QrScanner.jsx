@@ -45,6 +45,31 @@ function isInAppBrowser() {
   }
 }
 
+function isAndroid() {
+  try {
+    return /Android/i.test(navigator.userAgent || '')
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Jump from an in-app browser straight into full Chrome (Android only).
+ * Uses an Android intent URL (no #fragment, so it always parses).
+ */
+function openInChrome() {
+  try {
+    const u = new URL(window.location.href)
+    const scheme = (u.protocol || 'https:').replace(':', '')
+    const fallback = encodeURIComponent(`${u.protocol}//${u.host}/`)
+    window.location.href =
+      `intent://${u.host}/#Intent;scheme=${scheme};` +
+      `package=com.android.chrome;S.browser_fallback_url=${fallback};end`
+  } catch {
+    // ignore — copy-link fallback stays available
+  }
+}
+
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text)
@@ -214,21 +239,31 @@ export function QrScanner({ onScan, onClose }) {
       </div>
 
       {inApp && (
-        <p className="notice" role="note">
-          You seem to be inside Facebook/Messenger’s browser, which blocks the
-          camera. Tap below to copy this page’s link, then open it in{' '}
-          <strong>Chrome</strong> and scan from there.
-          <br />
-          <button
-            type="button"
-            className="btn btn-ghost btn-small"
-            onClick={copyLink}
-            style={{ marginTop: 8 }}
-          >
-            <Copy size={14} aria-hidden="true" />{' '}
-            {linkCopied ? 'Link copied!' : 'Copy page link'}
-          </button>
-        </p>
+        <div className="notice" role="note">
+          <p style={{ margin: '0 0 8px' }}>
+            You seem to be inside Facebook/Messenger’s browser, which blocks
+            the camera. Open this page in <strong>Chrome</strong> to scan.
+          </p>
+          <div className="update-actions">
+            {isAndroid() && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-small"
+                onClick={openInChrome}
+              >
+                <ExternalLink size={14} aria-hidden="true" /> Open in Chrome
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-ghost btn-small"
+              onClick={copyLink}
+            >
+              <Copy size={14} aria-hidden="true" />{' '}
+              {linkCopied ? 'Link copied!' : 'Copy page link'}
+            </button>
+          </div>
+        </div>
       )}
 
       {error && (
@@ -284,14 +319,6 @@ export function QrScanner({ onScan, onClose }) {
         >
           <Upload size={16} aria-hidden="true" /> Upload QR image
         </button>
-        <a
-          className="btn btn-ghost btn-small"
-          href={window.location.href}
-          target="_blank"
-          rel="noreferrer"
-        >
-          <ExternalLink size={14} aria-hidden="true" /> Open in browser
-        </a>
       </div>
       {scanMsg && (
         <p className="error" role="alert">
