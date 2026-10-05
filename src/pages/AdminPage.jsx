@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { useRoom } from '../hooks/useRoom'
 import { HostDashboard } from '../components/HostDashboard'
+import { isFirebaseConfigured } from '../lib/firebase'
 
 function loadName() {
   try {
@@ -36,7 +37,14 @@ export function AdminPage({ uid, authReady }) {
     return (
       <div className="theme-host page-center">
         <h1>Room not found</h1>
-        <p className="muted">{roomError || 'This room does not exist.'}</p>
+        <p className="muted">
+          There is no shared timer with code{' '}
+          <strong className="chip-code">{code}</strong>
+        </p>
+        <p className="muted small">
+          If you just created this room while the app was in demo mode, it was
+          only saved in this browser — create a fresh room to share online.
+        </p>
         <Link className="btn btn-primary" to="/">
           Back home
         </Link>
@@ -69,6 +77,7 @@ export function AdminPage({ uid, authReady }) {
       participants={participants}
       connected={connected}
       actions={actions}
+      demo={!isFirebaseConfigured}
     />
   )
 }

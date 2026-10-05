@@ -37,8 +37,20 @@ export function WatchPage({ uid, authReady }) {
       <div className="theme-viewer page-center">
         <h1>Room not found</h1>
         <p className="muted">
-          {roomError || 'Check the code and try again.'}
+          There is no shared timer with code{' '}
+          <strong className="chip-code">{code}</strong>
         </p>
+        <div className="card notfound-card">
+          <h2 className="card-title">Why am I seeing this?</h2>
+          <ul className="dl-list">
+            <li>The code may have a typo — check it with the host.</li>
+            <li>
+              The room may have been created in demo/offline mode, so it was
+              never saved online.
+            </li>
+            <li>The host may have deleted it, or you may be offline.</li>
+          </ul>
+        </div>
         <Link className="btn btn-primary" to="/">
           Back home
         </Link>

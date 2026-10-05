@@ -939,3 +939,13 @@ body {
   background: linear-gradient(90deg, #34d399, #6366f1);
   transition: width 0.2s linear;
 }
+
+/* ---------- demo + not-found helpers ---------- */
+.dash-notice {
+  margin: 16px 0 0;
+  max-width: 100%;
+}
+.notfound-card {
+  max-width: 480px;
+  text-align: left;
+}

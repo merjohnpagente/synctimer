@@ -143,6 +143,7 @@ export function HostDashboard({
   participants,
   connected,
   actions,
+  demo = false,
 }) {
   const [busy, setBusy] = useState('')
   const [actionError, setActionError] = useState(null)
@@ -213,6 +214,14 @@ export function HostDashboard({
           <SoundControl />
         </div>
       </header>
+
+      {demo && (
+        <p className="notice dash-notice" role="note">
+          Demo mode: this room exists only in THIS browser. Anyone opening the
+          invite link on another device will see “Room not found”. Add your
+          Firebase keys to enable real multi-device sync.
+        </p>
+      )}
 
       <main className="dash-grid">
         <section className="timer-section">
