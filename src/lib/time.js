@@ -166,34 +166,62 @@ export function installAudioUnlock() {
 }
 
 /**
- * Classic timer alarm (WebAudio, no asset files needed): rapid,
- * high-pitched square-wave beeps like a kitchen/digital timer.
- * Long (~10 seconds) and loud. Respects the sound toggle.
- * Returns true if sound was played.
+ * Looping timer alarm (WebAudio, no mp3 file needed): schedules short
+ * square-wave beeps (880Hz, 0.15s every 0.3s) for `durationSec`, just like a
+ * classic timer. Call stopAlarm() to silence it early (Stop button).
+ * Respects the sound toggle. Returns true if the alarm started.
  */
-export function playFinishChime(times = 32) {
+let alarmCtx = null
+let alarmTimer = null
+
+export function playAlarm(durationSec = 10) {
   if (!isSoundEnabled()) return false
   try {
-    const ctx = getCtx()
-    if (!ctx) return false
-    const now = ctx.currentTime + 0.05
-    for (let i = 0; i < times; i++) {
+    stopAlarm()
+    const Ctx = window.AudioContext || window.webkitAudioContext
+    if (!Ctx) return false
+    const ctx = new Ctx()
+    if (ctx.state === 'suspended') void ctx.resume()
+    alarmCtx = ctx
+    const end = ctx.currentTime + Math.max(1, durationSec)
+    let t = ctx.currentTime + 0.05
+    while (t < end) {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.type = 'square'
-      osc.frequency.value = 1046.5 // C6 — classic timer beep pitch
-      const t = now + i * 0.3
+      osc.frequency.value = 880
       gain.gain.setValueAtTime(0.0001, t)
-      gain.gain.exponentialRampToValueAtTime(0.32, t + 0.015)
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.17)
-      osc.connect(gain).connect(ctx.destination)
+      gain.gain.exponentialRampToValueAtTime(0.3, t + 0.015)
+      gain.gain.setValueAtTime(0.3, t + 0.15)
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
       osc.start(t)
       osc.stop(t + 0.2)
+      t += 0.3
     }
+    alarmTimer = setTimeout(stopAlarm, (Math.max(1, durationSec) + 1) * 1000)
     return true
   } catch {
-    // Audio is best-effort (autoplay policies, headless envs).
     return false
+  }
+}
+
+/** Silence a running alarm (also frees the AudioContext). */
+export function stopAlarm() {
+  if (alarmTimer) {
+    clearTimeout(alarmTimer)
+    alarmTimer = null
+  }
+  if (alarmCtx) {
+    const ctx = alarmCtx
+    alarmCtx = null
+    try {
+      const p = ctx.close()
+      if (p && typeof p.catch === 'function') p.catch(() => {})
+    } catch {
+      // ignore
+    }
   }
 }
 

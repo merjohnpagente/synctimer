@@ -5,7 +5,7 @@ import {
   ensureAudioUnlocked,
   formatClock,
   isSoundEnabled,
-  playFinishChime,
+  playAlarm,
   setSoundEnabled,
 } from '../lib/time'
 
@@ -145,14 +145,14 @@ export function SoundControl() {
     setSoundEnabled(next)
     if (next) {
       ensureAudioUnlocked()
-      playFinishChime(2)
+      playAlarm(2)
     }
   }
 
   const test = () => {
     ensureAudioUnlocked()
     setTesting(true)
-    playFinishChime(2)
+    playAlarm(2)
     setTimeout(() => setTesting(false), 1200)
   }
 

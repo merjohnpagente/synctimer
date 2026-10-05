@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Square } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { ConnectionBadge, ParticipantsList, SoundControl, TimerFace } from './common'
 import {
   STATUS,
   installAudioUnlock,
   inviteLinkFor,
-  playFinishChime,
+  playAlarm,
+  stopAlarm,
   vibrateOnFinish,
 } from '../lib/time'
 
@@ -108,21 +109,36 @@ export function HostDashboard({
   const [busy, setBusy] = useState('')
   const [actionError, setActionError] = useState(null)
   const [confirmEnd, setConfirmEnd] = useState(false)
+  const [ringing, setRinging] = useState(false)
   const prevStatus = useRef(null)
+  const ringTimer = useRef(null)
 
   // First tap anywhere unlocks browser audio so the alarm can be heard.
   useEffect(() => {
     installAudioUnlock()
+    return () => {
+      clearTimeout(ringTimer.current)
+      stopAlarm()
+    }
   }, [])
 
-  // Alarm exactly once per finish (also if opened while already finished).
+  const silence = () => {
+    stopAlarm()
+    clearTimeout(ringTimer.current)
+    setRinging(false)
+  }
+
+  // Looping alarm once per finish (also if opened while already finished).
   useEffect(() => {
     if (
       prevStatus.current !== STATUS.FINISHED &&
       effectiveStatus === STATUS.FINISHED
     ) {
-      playFinishChime()
+      playAlarm(10)
       vibrateOnFinish()
+      setRinging(true)
+      clearTimeout(ringTimer.current)
+      ringTimer.current = setTimeout(() => setRinging(false), 10500)
     }
     prevStatus.current = effectiveStatus
   }, [effectiveStatus])
@@ -242,6 +258,15 @@ export function HostDashboard({
               </>
             )}
           </div>
+          {ringing && (
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={silence}
+            >
+              <Square size={16} aria-hidden="true" /> Stop alarm
+            </button>
+          )}
           {effectiveStatus !== STATUS.ENDED &&
             (confirmEnd ? (
               <div className="end-confirm">

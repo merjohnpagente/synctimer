@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Square } from 'lucide-react'
 import { ConnectionBadge, SoundControl, TimerFace } from './common'
 import {
   STATUS,
   installAudioUnlock,
-  playFinishChime,
+  playAlarm,
   progressFraction,
+  stopAlarm,
   vibrateOnFinish,
 } from '../lib/time'
 
@@ -17,21 +18,36 @@ import {
  */
 export function ViewerDashboard({ code, room, mode = 'countdown', remainingMs, effectiveStatus, connected }) {
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [ringing, setRinging] = useState(false)
   const prevStatus = useRef(null)
+  const ringTimer = useRef(null)
 
   // First tap anywhere unlocks browser audio so the alarm can be heard.
   useEffect(() => {
     installAudioUnlock()
+    return () => {
+      clearTimeout(ringTimer.current)
+      stopAlarm()
+    }
   }, [])
 
-  // Alarm exactly once per finish (also if opened while already finished).
+  const silence = () => {
+    stopAlarm()
+    clearTimeout(ringTimer.current)
+    setRinging(false)
+  }
+
+  // Looping alarm once per finish (also if opened while already finished).
   useEffect(() => {
     if (
       prevStatus.current !== STATUS.FINISHED &&
       effectiveStatus === STATUS.FINISHED
     ) {
-      playFinishChime()
+      playAlarm(10)
       vibrateOnFinish()
+      setRinging(true)
+      clearTimeout(ringTimer.current)
+      ringTimer.current = setTimeout(() => setRinging(false), 10500)
     }
     prevStatus.current = effectiveStatus
   }, [effectiveStatus])
@@ -142,6 +158,15 @@ export function ViewerDashboard({ code, room, mode = 'countdown', remainingMs, e
           <Link className="btn btn-secondary" to="/">
             <ArrowLeft size={18} aria-hidden="true" /> Back to home
           </Link>
+        )}
+        {ringing && (
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={silence}
+          >
+            <Square size={16} aria-hidden="true" /> Stop alarm
+          </button>
         )}
       </main>
     </div>
