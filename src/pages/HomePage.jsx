@@ -119,7 +119,7 @@ export function HomePage({ uid, authReady, authError }) {
           height={56}
         />
         <div className="eyebrow">
-          SyncTimer <span className="ver-chip">v{APP_VERSION}</span>
+          SyncTimer <span className="ver-chip">{APP_VERSION}</span>
         </div>
         <h1>One timer, every screen.</h1>
         <p className="muted">

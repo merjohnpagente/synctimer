@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Timer, Volume2, VolumeX } from 'lucide-react'
 import {
   STATUS_LABEL,
@@ -187,5 +188,69 @@ export function SoundControl() {
         </button>
       )}
     </div>
+  )
+}
+
+/**
+ * Tells the user WHY a room won't open: genuinely missing vs access
+ * refused (sign-in/connection problem on this device) — with actions.
+ */
+export function RoomErrorPanel({ code, access }) {
+  const denied = access === 'denied'
+  return (
+    <>
+      <h1>{denied ? 'Can’t open this room' : 'Room not found'}</h1>
+      <p className="muted">
+        {denied ? (
+          <>
+            The app couldn’t sign you in, so the database refused access to
+            room <strong className="chip-code">{code}</strong>.
+          </>
+        ) : (
+          <>
+            There is no shared timer with code{' '}
+            <strong className="chip-code">{code}</strong>
+          </>
+        )}
+      </p>
+      <div className="card notfound-card">
+        <h2 className="card-title">What to try</h2>
+        <ul className="dl-list">
+          {denied ? (
+            <>
+              <li>Check your internet connection, then try again.</li>
+              <li>
+                Turn off any ad-blocker, VPN, or data-saver for this site.
+              </li>
+              <li>
+                If you opened this inside Messenger/Facebook, open it in
+                Chrome instead.
+              </li>
+            </>
+          ) : (
+            <>
+              <li>The code may have a typo — check it with the host.</li>
+              <li>
+                The room may have been created in demo/offline mode, so it
+                was never saved online.
+              </li>
+              <li>The host may have deleted it, or you may be offline.</li>
+            </>
+          )}
+        </ul>
+      </div>
+      <div className="update-actions">
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => window.location.reload()}
+        >
+          Try again
+        </button>
+        <Link className="btn btn-secondary" to="/">
+          Back home
+        </Link>
+      </div>
+    </>
   )
 }

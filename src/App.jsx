@@ -42,7 +42,7 @@ export default function App() {
         </Routes>
         <footer className="app-footer">
           <span>
-            SyncTimer v{APP_VERSION} · Developed by {DEVELOPER}
+            SyncTimer {APP_VERSION} · Developed by {DEVELOPER}
           </span>
         </footer>
       </div>

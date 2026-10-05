@@ -54,6 +54,9 @@ export function useRoom(code, uid, displayName = 'Guest') {
   const [room, setRoom] = useState(null)
   const [loading, setLoading] = useState(true)
   const [roomError, setRoomError] = useState(null)
+  // null = unknown yet, 'missing' = no such room, 'denied' = DB refused
+  // access (usually sign-in/connection problem on this device).
+  const [roomAccess, setRoomAccess] = useState(null)
   const [participants, setParticipants] = useState([])
   const [connected, setConnected] = useState(navigator.onLine !== false)
   const [now, setNow] = useState(() => Date.now())
@@ -100,6 +103,7 @@ export function useRoom(code, uid, displayName = 'Guest') {
     }
     setLoading(true)
     setRoomError(null)
+    setRoomAccess(null)
 
     if (!isFirebaseConfigured) {
       const sync = () => {
@@ -127,14 +131,21 @@ export function useRoom(code, uid, displayName = 'Guest') {
         const val = snap.val()
         if (!val) {
           setRoomError('Room not found. Check the code.')
+          setRoomAccess('missing')
           setRoom(null)
         } else {
           setRoom(val)
+          setRoomAccess('ok')
           setRoomError(null)
         }
         setLoading(false)
       },
       (err) => {
+        const denied =
+          err &&
+          (err.code === 'PERMISSION_DENIED' ||
+            /permission/i.test(err.message || ''))
+        setRoomAccess(denied ? 'denied' : 'missing')
         setRoomError(err?.message || 'Failed to load room.')
         setLoading(false)
       },
@@ -381,6 +392,7 @@ export function useRoom(code, uid, displayName = 'Guest') {
     room,
     loading,
     roomError,
+    roomAccess,
     participants,
     connected,
     now,

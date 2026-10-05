@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { useRoom } from '../hooks/useRoom'
 import { HostDashboard } from '../components/HostDashboard'
+import { RoomErrorPanel } from '../components/common'
 import { isFirebaseConfigured } from '../lib/firebase'
 
 function loadName() {
@@ -14,7 +15,7 @@ function loadName() {
 /** Admin route: only the room owner gets controls. */
 export function AdminPage({ uid, authReady }) {
   const { code } = useParams()
-  const { room, loading, roomError, participants, connected, mode, displayMs, effectiveStatus, isOwner, actions } =
+  const { room, loading, roomError, roomAccess, participants, connected, mode, displayMs, effectiveStatus, isOwner, actions } =
     useRoom(code, uid, loadName())
 
   if (!authReady) {
@@ -36,18 +37,7 @@ export function AdminPage({ uid, authReady }) {
   if (roomError || !room) {
     return (
       <div className="theme-host page-center">
-        <h1>Room not found</h1>
-        <p className="muted">
-          There is no shared timer with code{' '}
-          <strong className="chip-code">{code}</strong>
-        </p>
-        <p className="muted small">
-          If you just created this room while the app was in demo mode, it was
-          only saved in this browser — create a fresh room to share online.
-        </p>
-        <Link className="btn btn-primary" to="/">
-          Back home
-        </Link>
+        <RoomErrorPanel code={code} access={roomAccess} />
       </div>
     )
   }
