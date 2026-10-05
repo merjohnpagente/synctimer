@@ -89,7 +89,7 @@ export function TimerFace({
         </svg>
         <div className="timer-digits">
           <div
-            className="timer-main"
+            className={`timer-main${h > 0 ? ' has-hours' : ''}`}
             aria-label={`${main} ${isSW ? 'elapsed' : 'remaining'}, timer ${status}`}
           >
             {main}
@@ -164,15 +164,18 @@ export function SoundControl() {
         className="btn btn-ghost btn-small"
         onClick={toggle}
         aria-pressed={enabled}
+        aria-label={enabled ? 'Sound on' : 'Muted'}
         title={enabled ? 'Mute the finish alarm' : 'Unmute the finish alarm'}
       >
         {enabled ? (
           <>
-            <Volume2 size={16} aria-hidden="true" /> Sound on
+            <Volume2 size={16} aria-hidden="true" />
+            <span className="hide-narrow">Sound on</span>
           </>
         ) : (
           <>
-            <VolumeX size={16} aria-hidden="true" /> Muted
+            <VolumeX size={16} aria-hidden="true" />
+            <span className="hide-narrow">Muted</span>
           </>
         )}
       </button>

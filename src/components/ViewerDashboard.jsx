@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Square } from 'lucide-react'
+import { ArrowLeft, Maximize, Minimize, Square } from 'lucide-react'
 import { ConnectionBadge, SoundControl, TimerFace } from './common'
+import { useHotkeys } from '../hooks/useHotkeys'
+import { useTimerTitle } from '../hooks/useTimerTitle'
 import {
   STATUS,
   installAudioUnlock,
@@ -92,6 +94,18 @@ export function ViewerDashboard({ code, room, mode = 'countdown', remainingMs, e
     }
   }
 
+  useHotkeys({
+    f: toggleFullscreen,
+    escape: () => ringing && silence(),
+  })
+
+  useTimerTitle({
+    displayMs: remainingMs,
+    status: effectiveStatus,
+    name: room.name,
+    mode,
+  })
+
   // Progress comes from the same server-time value as the big digits
   // (device-clock math here would disagree with them on skewed clocks).
   // Stopwatch has no target, so it gets no progress bar.
@@ -102,7 +116,7 @@ export function ViewerDashboard({ code, room, mode = 'countdown', remainingMs, e
       : 0
 
   return (
-    <div className="theme-viewer viewer">
+    <div className={`theme-viewer viewer${isFullscreen ? ' is-fullscreen' : ''}`}>
       <header className="viewer-header">
         <div>
           <div className="eyebrow">Shared timer</div>
@@ -119,8 +133,16 @@ export function ViewerDashboard({ code, room, mode = 'countdown', remainingMs, e
             className="btn btn-ghost btn-small"
             onClick={toggleFullscreen}
             aria-label={isFullscreen ? 'Exit full screen' : 'Enter full screen'}
+            title={`${isFullscreen ? 'Exit full screen' : 'Full screen'} (F)`}
           >
-            {isFullscreen ? 'Exit full screen' : 'Full screen'}
+            {isFullscreen ? (
+              <Minimize size={16} aria-hidden="true" />
+            ) : (
+              <Maximize size={16} aria-hidden="true" />
+            )}
+            <span className="hide-narrow">
+              {isFullscreen ? 'Exit full screen' : 'Full screen'}
+            </span>
           </button>
         </div>
       </header>
