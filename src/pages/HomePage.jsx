@@ -111,6 +111,13 @@ export function HomePage({ uid, authReady, authError }) {
     <div className="theme-host home">
       <UpdateBanner />
       <header className="home-hero">
+        <img
+          src="/logo.svg"
+          className="brand-mark"
+          alt="SyncTimer logo"
+          width={56}
+          height={56}
+        />
         <div className="eyebrow">
           SyncTimer <span className="ver-chip">v{APP_VERSION}</span>
         </div>

@@ -21,6 +21,13 @@ export function DownloadPage() {
   return (
     <div className="theme-host download">
       <header className="dl-hero">
+        <img
+          src="/logo.svg"
+          className="brand-mark"
+          alt="SyncTimer logo"
+          width={56}
+          height={56}
+        />
         <div className="eyebrow">SyncTimer for Android</div>
         <h1>Get the app.</h1>
         <p className="muted">
