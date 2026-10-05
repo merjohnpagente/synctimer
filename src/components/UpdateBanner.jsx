@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BellRing, Download, X } from 'lucide-react'
-import { APP_VERSION } from '../lib/site'
+import { Browser } from '@capacitor/browser'
+import { APP_VERSION, isNativeApp } from '../lib/site'
 import { checkForUpdate, dismissUpdate } from '../lib/updates'
 
 /**
@@ -13,6 +14,7 @@ export function UpdateBanner() {
   const [downloading, setDownloading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [done, setDone] = useState(false)
+  const [viaBrowser, setViaBrowser] = useState(false)
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -31,6 +33,21 @@ export function UpdateBanner() {
     setDownloading(true)
     setProgress(0)
     setError(null)
+    // Inside the installed app, WebView fetch() of binary downloads is
+    // unreliable (redirect/CORS handling) — open the file in the system
+    // browser instead, which downloads it and prompts install on tap.
+    if (isNativeApp()) {
+      try {
+        await Browser.open({ url: info.url })
+        setDownloading(false)
+        setViaBrowser(true)
+        setDone(true)
+      } catch (err) {
+        setDownloading(false)
+        setError(err?.message || 'Could not open the browser.')
+      }
+      return
+    }
     try {
       const res = await fetch(info.url)
       if (!res.ok) throw new Error(`Download failed (HTTP ${res.status})`)
@@ -93,8 +110,17 @@ export function UpdateBanner() {
       )}
       {done ? (
         <p className="muted small">
-          Downloaded! Open the <strong>SyncTimer.apk</strong> file to install
-          (allow “Install unknown apps” if asked).
+          {viaBrowser ? (
+            <>
+              Opened in your browser — finish the download there, then open
+              the <strong>SyncTimer.apk</strong> file to install.
+            </>
+          ) : (
+            <>
+              Downloaded! Open the <strong>SyncTimer.apk</strong> file to
+              install (allow “Install unknown apps” if asked).
+            </>
+          )}
         </p>
       ) : downloading ? (
         <div>
