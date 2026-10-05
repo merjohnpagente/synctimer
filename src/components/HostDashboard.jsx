@@ -194,8 +194,6 @@ export function HostDashboard({
     }
   }
 
-  const viewerCount = participants.filter((p) => p.role !== 'host').length
-
   return (
     <div className="theme-host dashboard">
       <header className="dash-header">
@@ -204,9 +202,6 @@ export function HostDashboard({
           <h1 className="dash-title">{room.name || 'Untitled timer'}</h1>
           <div className="dash-sub">
             <span className="chip chip-code">{code}</span>
-            <span className="muted small">
-              {viewerCount} viewer{viewerCount === 1 ? '' : 's'} connected
-            </span>
           </div>
         </div>
         <div className="dash-head-right">
