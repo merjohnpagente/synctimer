@@ -6,7 +6,6 @@ import {
   STATUS,
   installAudioUnlock,
   playAlarm,
-  progressFraction,
   stopAlarm,
   vibrateOnFinish,
 } from '../lib/time'
@@ -93,7 +92,14 @@ export function ViewerDashboard({ code, room, mode = 'countdown', remainingMs, e
     }
   }
 
-  const frac = progressFraction(room, Date.now())
+  // Progress comes from the same server-time value as the big digits
+  // (device-clock math here would disagree with them on skewed clocks).
+  // Stopwatch has no target, so it gets no progress bar.
+  const isSW = mode === 'stopwatch'
+  const frac =
+    !isSW && room.durationMs > 0
+      ? Math.min(1, Math.max(0, 1 - remainingMs / room.durationMs))
+      : 0
 
   return (
     <div className="theme-viewer viewer">
@@ -127,19 +133,21 @@ export function ViewerDashboard({ code, room, mode = 'countdown', remainingMs, e
           tone="light"
           mode={mode}
         />
-        <div
-          className="viewer-progress"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(frac * 100)}
-          aria-label="Elapsed time"
-        >
+        {!isSW && (
           <div
-            className="viewer-progress-fill"
-            style={{ width: `${Math.round(frac * 100)}%` }}
-          />
-        </div>
+            className="viewer-progress"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(frac * 100)}
+            aria-label="Elapsed time"
+          >
+            <div
+              className="viewer-progress-fill"
+              style={{ width: `${Math.round(frac * 100)}%` }}
+            />
+          </div>
+        )}
         <p className="muted viewer-hint">
           {effectiveStatus === STATUS.READY &&
             (mode === 'stopwatch'

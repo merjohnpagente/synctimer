@@ -291,8 +291,13 @@ export function useRoom(code, uid, displayName = 'Guest') {
       })
       return
     }
-    const base = room.status === STATUS.PAUSED ? room.remainingMs : room.durationMs
-    const safe = clampDurationMs(base ?? room.durationMs)
+    // Fresh starts get a sane clamped duration; resuming from pause keeps
+    // the exact leftover (clamping here would jump e.g. 3s left back to 5s).
+    const isResume = room.status === STATUS.PAUSED
+    const base = isResume ? room.remainingMs : room.durationMs
+    const safe = isResume
+      ? Math.max(0, Math.round(base ?? room.durationMs))
+      : clampDurationMs(base ?? room.durationMs)
     await writeRoom({
       status: STATUS.RUNNING,
       endsAt: Date.now() + timeOffset + safe,

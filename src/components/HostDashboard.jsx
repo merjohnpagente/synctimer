@@ -33,13 +33,27 @@ async function copyText(text) {
   }
 }
 
-export function SharePanel({ code }) {
+export function SharePanel({ code, demo = false }) {
   const link = inviteLinkFor(code)
   const [copied, setCopied] = useState('')
   const [zoomed, setZoomed] = useState(false)
   const timer = useRef(null)
 
   useEffect(() => () => clearTimeout(timer.current), [])
+
+  // In demo mode the room only exists in this browser — showing a link/QR
+  // would mislead the host into sharing something that can't work elsewhere.
+  if (demo) {
+    return (
+      <section className="card share-card" aria-label="Share room">
+        <h2 className="card-title">Invite viewers</h2>
+        <p className="notice" role="note">
+          Sharing is disabled in demo mode — this room only exists in this
+          browser. Connect Firebase to get a working invite link and QR code.
+        </p>
+      </section>
+    )
+  }
 
   const flash = (what) => {
     setCopied(what)
@@ -346,7 +360,7 @@ export function HostDashboard({
         </section>
 
         <aside className="side-section">
-          <SharePanel code={code} />
+          <SharePanel code={code} demo={demo} />
           <section className="card" aria-label="Participants">
             <h2 className="card-title">
               Participants{' '}
