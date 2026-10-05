@@ -5,7 +5,7 @@ export const APK_URL =
 export const RELEASES_URL =
   'https://github.com/merjohnpagente/synctimer/releases'
 export const REPO_URL = 'https://github.com/merjohnpagente/synctimer'
-export const DEVELOPER = 'Merjohn B. Pagente'
+export const DEVELOPER = 'Merjohn Pagente'
 
 // Single source lives in lib/time.js (also used for invite links).
 export { isNativeApp } from './time'
