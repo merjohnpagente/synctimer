@@ -51,13 +51,25 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # NOTE: GitHub-hosted ubuntu runners already ship with the Android SDK
-      # preinstalled ($ANDROID_HOME). Licenses MUST be accepted before
-      # installing (otherwise the install fails), and failures must NOT be
-      # masked — a missing platform/build-tools breaks the Gradle build.
+      # NOTE: GitHub-hosted runner images change over time (ANDROID_HOME may
+      # be unset, sdkmanager may be missing from PATH, or cmdline-tools may
+      # be gone entirely). This step is self-sufficient: it installs
+      # cmdline-tools itself when absent, then guarantees the packages.
+      # Failures are NOT masked so the real cause stays visible.
       - name: Ensure Android packages
         run: |
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
           echo "ANDROID_HOME=$ANDROID_HOME"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          if ! command -v sdkmanager > /dev/null 2>&1; then
+            echo "sdkmanager missing — installing cmdline-tools"
+            mkdir -p "$ANDROID_HOME/cmdline-tools"
+            wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdtools.zip
+            unzip -q /tmp/cmdtools.zip -d "$ANDROID_HOME/cmdline-tools"
+            mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+            export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+          fi
           yes | sdkmanager --licenses > /dev/null || true
           sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
           sdkmanager --list_installed
