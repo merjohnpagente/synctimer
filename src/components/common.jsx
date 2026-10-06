@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Timer, Volume2, VolumeX } from 'lucide-react'
 import {
@@ -255,5 +255,56 @@ export function RoomErrorPanel({ code, access }) {
         </Link>
       </div>
     </>
+  )
+}
+
+/** Small toast stack; feed it via toast() from lib/toast.js. */
+export function Toaster() {
+  const [items, setItems] = useState([])
+  useEffect(() => {
+    const onToast = (e) => {
+      const detail = (e && e.detail) || {}
+      const item = {
+        key: Math.random().toString(36).slice(2),
+        message: detail.message || '',
+        ms: detail.ms || 2600,
+      }
+      if (!item.message) return
+      setItems((prev) => [...prev.slice(-2), item])
+      setTimeout(() => {
+        setItems((prev) => prev.filter((i) => i.key !== item.key))
+      }, item.ms)
+    }
+    window.addEventListener('synctimer-toast', onToast)
+    return () => window.removeEventListener('synctimer-toast', onToast)
+  }, [])
+  if (!items.length) return null
+  return (
+    <div className="toaster" role="status" aria-live="polite">
+      {items.map((i) => (
+        <div key={i.key} className="toast">
+          {i.message}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** Shimmering placeholder while a room loads. */
+export function TimerSkeleton({ tone = 'dark' }) {
+  return (
+    <div
+      className={`timer-face tone-${tone}`}
+      role="status"
+      aria-label="Loading timer"
+    >
+      <div className="timer-ring-wrap">
+        <div className="skeleton-ring" aria-hidden="true" />
+        <div className="timer-digits">
+          <div className="skeleton-digits" aria-hidden="true" />
+          <div className="skeleton-pill" aria-hidden="true" />
+        </div>
+      </div>
+    </div>
   )
 }

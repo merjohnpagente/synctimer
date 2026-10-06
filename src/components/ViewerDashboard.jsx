@@ -11,6 +11,7 @@ import {
   stopAlarm,
   vibrateOnFinish,
 } from '../lib/time'
+import { tapFeedback } from '../lib/toast'
 
 /**
  * Participant dashboard. Minimalist, view-only:
@@ -83,6 +84,7 @@ export function ViewerDashboard({ code, room, mode = 'countdown', remainingMs, e
   }, [])
 
   const toggleFullscreen = async () => {
+    tapFeedback()
     try {
       if (document.fullscreenElement) {
         await document.exitFullscreen()
@@ -116,10 +118,21 @@ export function ViewerDashboard({ code, room, mode = 'countdown', remainingMs, e
       : 0
 
   return (
-    <div className={`theme-viewer viewer${isFullscreen ? ' is-fullscreen' : ''}`}>
+    <div
+      className={`theme-viewer viewer${isFullscreen ? ' is-fullscreen' : ''}${effectiveStatus === STATUS.RUNNING ? ' is-live' : ''}`}
+    >
       <header className="viewer-header">
         <div>
-          <div className="eyebrow">Shared timer</div>
+          <div className="brand-row">
+            <img
+              src="/logo.svg"
+              className="brand-mark brand-mark-small"
+              alt=""
+              width={28}
+              height={28}
+            />
+            <div className="eyebrow">Shared timer</div>
+          </div>
           <h1 className="viewer-title">{room.name || 'Untitled timer'}</h1>
           <div className="viewer-code">
             Room <strong>{code}</strong>

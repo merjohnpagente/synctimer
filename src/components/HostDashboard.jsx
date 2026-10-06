@@ -13,6 +13,7 @@ import {
   stopAlarm,
   vibrateOnFinish,
 } from '../lib/time'
+import { tapFeedback } from '../lib/toast'
 
 async function copyText(text) {
   try {
@@ -199,6 +200,7 @@ export function HostDashboard({
   }, [effectiveStatus])
 
   const run = async (label, fn) => {
+    tapFeedback()
     setBusy(label)
     setActionError(null)
     try {
@@ -244,7 +246,16 @@ export function HostDashboard({
     <div className="theme-host dashboard">
       <header className="dash-header">
         <div>
-          <div className="eyebrow">Admin dashboard</div>
+          <div className="brand-row">
+            <img
+              src="/logo.svg"
+              className="brand-mark brand-mark-small"
+              alt=""
+              width={28}
+              height={28}
+            />
+            <div className="eyebrow">Admin dashboard</div>
+          </div>
           <h1 className="dash-title">{room.name || 'Untitled timer'}</h1>
           <div className="dash-sub">
             <span className="chip chip-code">{code}</span>
@@ -324,7 +335,7 @@ export function HostDashboard({
               effectiveStatus === STATUS.PAUSED ||
               effectiveStatus === STATUS.FINISHED) &&
               mode !== 'stopwatch' && (
-              <>
+              <div className="controls-secondary">
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -343,7 +354,7 @@ export function HostDashboard({
                 >
                   −1:00
                 </button>
-              </>
+              </div>
             )}
           </div>
           {ringing && (

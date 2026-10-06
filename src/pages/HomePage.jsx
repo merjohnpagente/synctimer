@@ -1,9 +1,17 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Camera, Smartphone } from 'lucide-react'
+import { Camera, Download, History, Smartphone, X } from 'lucide-react'
 import { UpdateBanner } from '../components/UpdateBanner'
 import { isFirebaseConfigured } from '../lib/firebase'
 import { APP_VERSION, isNativeApp } from '../lib/site'
+import {
+  getPrefs,
+  getRecentRooms,
+  isOnboarded,
+  pushRecentRoom,
+  setOnboarded,
+  setPrefs,
+} from '../lib/recent'
 import { createRoom } from '../hooks/useRoom'
 import { clampDurationMs, normalizeCode } from '../lib/time'
 import { extractCodeFromScan } from '../lib/scan'
@@ -33,14 +41,22 @@ function loadName() {
 export function HomePage({ uid, authReady, authError }) {
   const navigate = useNavigate()
   const [roomName, setRoomName] = useState('')
-  const [minutes, setMinutes] = useState(10)
-  const [timerMode, setTimerMode] = useState('countdown')
+  const [minutes, setMinutes] = useState(() => getPrefs().minutes ?? 10)
+  const [timerMode, setTimerMode] = useState(() =>
+    getPrefs().mode === 'stopwatch' ? 'stopwatch' : 'countdown',
+  )
   const [joinCode, setJoinCode] = useState('')
   const [displayName, setDisplayName] = useState(loadName)
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState(null)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState(null)
+  const [recent, setRecent] = useState(() => getRecentRooms())
+  const [showOnboard, setShowOnboard] = useState(
+    () => !isOnboarded() && getRecentRooms().length === 0,
+  )
+  const [installEvt, setInstallEvt] = useState(null)
+  const [isStandalone, setIsStandalone] = useState(false)
 
   // Support share links like ?join=ABC123 (query links survive apps such
   // as Messenger that sometimes strip #fragments from shared URLs).
@@ -55,6 +71,25 @@ export function HomePage({ uid, authReady, authError }) {
       // ignore malformed URLs
     }
   }, [navigate])
+
+  // PWA install prompt (Android Chrome). Hidden in the native app and
+  // when already installed.
+  useEffect(() => {
+    try {
+      setIsStandalone(
+        window.matchMedia('(display-mode: standalone)').matches ||
+          window.navigator.standalone === true,
+      )
+    } catch {
+      // ignore
+    }
+    const onPrompt = (e) => {
+      e.preventDefault()
+      setInstallEvt(e)
+    }
+    window.addEventListener('beforeinstallprompt', onPrompt)
+    return () => window.removeEventListener('beforeinstallprompt', onPrompt)
+  }, [])
 
   const persistName = (v) => {
     setDisplayName(v)
@@ -85,6 +120,9 @@ export function HomePage({ uid, authReady, authError }) {
         ownerId: uid,
         mode: timerMode,
       })
+      setPrefs({ minutes: Number(minutes), mode: timerMode })
+      pushRecentRoom(code, 'host')
+      setRecent(getRecentRooms())
       navigate(`/admin/${code}`)
     } catch (err) {
       setError(err?.message || 'Could not create room.')
@@ -100,6 +138,7 @@ export function HomePage({ uid, authReady, authError }) {
       setError('Enter a room code to join.')
       return
     }
+    pushRecentRoom(clean, 'viewer')
     navigate(`/watch/${clean}`)
   }
 
@@ -111,10 +150,31 @@ export function HomePage({ uid, authReady, authError }) {
         return
       }
       setScanning(false)
+      pushRecentRoom(code, 'viewer')
+      setRecent(getRecentRooms())
       navigate(`/watch/${code}`)
     },
     [navigate],
   )
+
+  const dismissOnboard = () => {
+    setOnboarded()
+    setShowOnboard(false)
+  }
+
+  const canInstall =
+    Boolean(installEvt) && !isStandalone && !isNativeApp()
+
+  const installApp = async () => {
+    if (!installEvt) return
+    try {
+      installEvt.prompt()
+      await installEvt.userChoice
+    } catch {
+      // ignore
+    }
+    setInstallEvt(null)
+  }
 
   return (
     <div className="theme-host home">
@@ -141,7 +201,58 @@ export function HomePage({ uid, authReady, authError }) {
               <Smartphone size={18} aria-hidden="true" /> Get the Android app
             </Link>
           )}
+          {canInstall && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={installApp}
+            >
+              <Download size={18} aria-hidden="true" /> Install app
+            </button>
+          )}
         </div>
+        {recent.length > 0 && (
+          <div className="rejoin-row" aria-label="Recent rooms">
+            <span className="rejoin-label">
+              <History size={14} aria-hidden="true" /> Continue
+            </span>
+            {recent.map((r) => (
+              <button
+                key={r.code}
+                type="button"
+                className="chip-btn"
+                onClick={() =>
+                  navigate(r.role === 'host' ? `/admin/${r.code}` : `/watch/${r.code}`)
+                }
+              >
+                {r.code}
+              </button>
+            ))}
+          </div>
+        )}
+        {showOnboard && (
+          <div className="onboard-strip" role="note" aria-label="How it works">
+            <ol>
+              <li>
+                <strong>Create</strong> a room as admin
+              </li>
+              <li>
+                <strong>Share</strong> the link or QR
+              </li>
+              <li>
+                <strong>Join</strong> as viewer — stays in sync
+              </li>
+            </ol>
+            <button
+              type="button"
+              className="btn btn-ghost btn-small"
+              onClick={dismissOnboard}
+              aria-label="Dismiss guide"
+            >
+              <X size={14} aria-hidden="true" /> Got it
+            </button>
+          </div>
+        )}
         {!isFirebaseConfigured && (
           <p className="notice" role="note">
             Demo mode: Firebase env vars are missing, so rooms only work on this

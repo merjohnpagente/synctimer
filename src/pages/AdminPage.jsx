@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { useRoom } from '../hooks/useRoom'
 import { HostDashboard } from '../components/HostDashboard'
-import { RoomErrorPanel } from '../components/common'
+import { RoomErrorPanel, TimerSkeleton } from '../components/common'
 import { isFirebaseConfigured } from '../lib/firebase'
 
 function loadName() {
@@ -29,7 +29,8 @@ export function AdminPage({ uid, authReady }) {
   if (loading) {
     return (
       <div className="theme-host page-center">
-        <p className="muted">Loading room {code}…</p>
+        <TimerSkeleton tone="dark" />
+        <p className="muted small">Loading room {code}…</p>
       </div>
     )
   }

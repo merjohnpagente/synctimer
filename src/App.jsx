@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react'
 import { HashRouter, Link, Route, Routes } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { HomePage } from './pages/HomePage'
+import { Toaster } from './components/common'
 import { APP_VERSION, DEVELOPER } from './lib/site'
 
 const AdminPage = lazy(() =>
@@ -63,6 +64,7 @@ export default function App() {
             SyncTimer {APP_VERSION} · Developed by {DEVELOPER}
           </span>
         </footer>
+        <Toaster />
       </div>
     </HashRouter>
   )

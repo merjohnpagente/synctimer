@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useRoom } from '../hooks/useRoom'
-import { RoomErrorPanel } from '../components/common'
+import { RoomErrorPanel, TimerSkeleton } from '../components/common'
 import { ViewerDashboard } from '../components/ViewerDashboard'
+import { pushRecentRoom } from '../lib/recent'
 
 function loadName() {
   try {
@@ -17,6 +19,10 @@ export function WatchPage({ uid, authReady }) {
   const { room, loading, roomError, roomAccess, connected, mode, displayMs, effectiveStatus } =
     useRoom(code, uid, loadName())
 
+  useEffect(() => {
+    if (room && code) pushRecentRoom(code, 'viewer')
+  }, [room, code])
+
   if (!authReady) {
     return (
       <div className="theme-viewer page-center">
@@ -28,7 +34,8 @@ export function WatchPage({ uid, authReady }) {
   if (loading) {
     return (
       <div className="theme-viewer page-center">
-        <p className="muted">Loading room {code}…</p>
+        <TimerSkeleton tone="light" />
+        <p className="muted small">Loading room {code}…</p>
       </div>
     )
   }
