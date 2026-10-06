@@ -52,12 +52,15 @@ jobs:
           java-version: 17
 
       # NOTE: GitHub-hosted ubuntu runners already ship with the Android SDK
-      # preinstalled ($ANDROID_HOME). The setup-android action was removed
-      # because it kept failing — plain Gradle works against the stock SDK.
+      # preinstalled ($ANDROID_HOME). Licenses MUST be accepted before
+      # installing (otherwise the install fails), and failures must NOT be
+      # masked — a missing platform/build-tools breaks the Gradle build.
       - name: Ensure Android packages
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
+          echo "ANDROID_HOME=$ANDROID_HOME"
           yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          sdkmanager --list_installed
 
       - name: Sync Capacitor assets
         run: npm run cap:sync
