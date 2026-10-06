@@ -7,7 +7,4 @@
     <target
         android:name="second_hand"
         android:animation="@animator/hand_sweep" />
-    <target
-        android:name="face_ring"
-        android:animation="@animator/ring_draw" />
 </animated-vector>

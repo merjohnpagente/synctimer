@@ -27,15 +27,14 @@
         android:fillColor="#FFFFFF"
         android:pathData="M50,20 h8 v8 h-8 Z" />
 
-    <!-- dial ring (draw-on target) -->
+    <!-- dial ring (static full ring; trim animation removed for maximum
+         build compatibility — rotation sweep carries the motion) -->
     <path
         android:name="face_ring"
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFF"
         android:strokeWidth="7"
         android:strokeLineCap="round"
-        android:trimPathStart="0"
-        android:trimPathEnd="0"
         android:pathData="M54,34 a26,26 0 1,1 -0.1,0 Z" />
 
     <!-- minute hand (static, pointing to 12) -->
