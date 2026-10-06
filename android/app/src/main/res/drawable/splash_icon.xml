@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SyncTimer animated splash icon (white stopwatch glyph, no gradients
+  so it is safe on all API levels). Used by splash_animated.xml.
+  Viewport 108x108 (material icon grid). Groups:
+  - "face_ring": dial ring, trimPathEnd animated 0 -> 1 (draw-on)
+  - "minute_hand": static hour/minute hand
+  - "second_hand": rotates 0 -> 360 (sweep), pivot at dial center
+  - crown/cap/stem: static stopwatch top
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- crown -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,6 h8 a2,2 0 0,1 2,2 v4 a2,2 0 0,1 -2,2 h-8 a2,2 0 0,1 -2,-2 v-4 a2,2 0 0,1 2,-2 Z" />
+    <!-- cap -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,12 h20 a2.5,2.5 0 0,1 2.5,2.5 v3 a2.5,2.5 0 0,1 -2.5,2.5 h-20 a2.5,2.5 0 0,1 -2.5,-2.5 v-3 a2.5,2.5 0 0,1 2.5,-2.5 Z" />
+    <!-- stem -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,20 h8 v8 h-8 Z" />
+
+    <!-- dial ring (draw-on target) -->
+    <path
+        android:name="face_ring"
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:trimPathStart="0"
+        android:trimPathEnd="0"
+        android:pathData="M54,34 a26,26 0 1,1 -0.1,0 Z" />
+
+    <!-- minute hand (static, pointing to 12) -->
+    <path
+        android:name="minute_hand"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M54,60 L54,44" />
+
+    <!-- second hand (sweep target), pivot at dial center 54,60 -->
+    <group
+        android:name="second_hand"
+        android:pivotX="54"
+        android:pivotY="60">
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="5"
+            android:strokeLineCap="round"
+            android:pathData="M54,60 L70,70" />
+    </group>
+
+    <!-- dial center dot -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,56 a4,4 0 1,1 -0.1,0 Z" />
+</vector>

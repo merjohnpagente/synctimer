@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Animated launch icon: second-hand sweep + ring draw-on (<=1000ms).
+     Used as windowSplashScreenAnimatedIcon on Android 12+; older versions
+     show the vector's first frame statically. -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/splash_icon">
+    <target
+        android:name="second_hand"
+        android:animation="@animator/hand_sweep" />
+    <target
+        android:name="face_ring"
+        android:animation="@animator/ring_draw" />
+</animated-vector>

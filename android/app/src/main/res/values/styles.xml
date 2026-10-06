@@ -17,6 +17,14 @@
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <!-- Legacy static splash (Android < 12). -->
         <item name="android:background">@drawable/splash</item>
+        <!-- Animated launch icon (Android 12+): second-hand sweep + ring
+             draw-on, capped at 1000ms by the system. -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_animated</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenBrandingImage">@drawable/branding_merjdev</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

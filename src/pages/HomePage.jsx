@@ -178,7 +178,7 @@ export function HomePage({ uid, authReady, authError }) {
 
   return (
     <div className="theme-host home">
-      <UpdateBanner />
+      {!isNativeApp() && <UpdateBanner />}
       <header className="home-hero">
         <img
           src="/logo.svg"
